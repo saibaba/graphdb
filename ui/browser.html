@@ -1,0 +1,74 @@
+<html>
+    <head><title>Generic Graph browser via links</title></head>
+
+    <body>
+        <h2>Node Attributes:</h2>
+        <ul>
+        {% for ap in ref.attributes %}
+          <li>
+          {{ ap.name }} =  {{ ap.value }}
+          </li>
+        {% endfor %}
+         </ul>
+
+         <h2>Outgoing relations</h2>
+         <ul>
+             {% for r in ref.relationships.outgoing %}
+             <li>
+             <a href="{{ r.end_url }}">{{ r.type_name }}</a>
+             <br/>
+             <ul>
+                 {% for rap in r.attributes %}
+                 <li>{{ rap.name }} =  {{ rap.value }}</li>
+                 {% endfor %}
+             </ul>
+             </li>
+             {% endfor %}
+
+          </ul>
+
+         <h2>Incoming relations</h2>
+         <ul>
+             {% for r in ref.relationships.incoming %}
+             <li>
+             <a href="{{ r.start_url }}">{{ r.type_name }}</a>
+             <br/>
+             <ul>
+                 {% for rap in r.attributes %}
+                 <li>{{ rap.value }} =  {{ rap.value }}</li>
+                 {% endfor %}
+             </ul>
+             </li>
+             {% endfor %}
+
+          </ul>
+
+          <h2>Create a child node</h2>
+          <div>
+
+          <div style="float: left;">
+          <form method="POST" action="{{ start_node_url }}">
+              <textarea name="yaml" rows="20" cols="100">#Post your yaml here to create a node as a child</textarea>
+              <br/>
+              <input type="submit" />
+          </form>
+          </div>
+          <div style="float: right;">
+          <pre>
+          #here is a sample
+          node:
+            properties:
+              name : down
+              value: D
+
+            relations:
+              - to_node_id : 97e00125-e2c4-469d-84bb-174307e7845f
+                type: FRIEND
+              - to_node_id : 671921ba-b99e-45cd-b06c-b58132b4baed
+                type: FOE
+          </pre>
+          </div>
+        </div>
+
+    </body>
+</html>
