@@ -1,0 +1,153 @@
+from model import entities
+
+class _RelationshipsProxy(object):
+    DIR_IN = 0
+    DIR_OUT = 1
+    DIR_BOTH = 2
+
+    def __init__(self, owner_node, direction = DIR_BOTH):
+        self.owner_node = owner_node
+        self.direction = direction
+
+    def create(self, name, target_node, **props):
+        if self.direction == _RelationshipsProxy.DIR_OUT or self.direction == _RelationshipsProxy.DIR_BOTH:
+            r = Relationship(name, self.owner_node, target_node, **props)
+        elif self.direction == _RelationshipsProxy.DIR_IN:
+            r = Relationship(name, target_node, self.owner_node, **props)
+
+        self.owner_node.relationship_list.append(r)
+        target_node.relationship_list.append(r)
+        return r
+
+    def outgoing_func(self):
+        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_OUT)
+
+    def incoming_func(self):
+        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_IN)
+
+    def __getattr__(self, n):
+        if n == "incoming":
+            return self.incoming_func()
+        elif n == "outgoing":
+            return self.outgoing_func()
+        else:
+            AttributeError(n)
+
+    def __iter__(self):
+        for r in self.owner_node.relationship_list:
+            if self.direction == _RelationshipsProxy.DIR_BOTH:
+                yield r
+            elif self.direction == _RelationshipsProxy.DIR_IN and self.owner_node == r.end():
+                yield r
+            elif self.direction == _RelationshipsProxy.DIR_OUT and self.owner_node == r.start():
+                yield r
+
+class Base(object):
+
+    def __init__(self, **props):
+        self.__dict__['properties'] = dict(props)
+        self.dirty = True
+
+    def __str__(self):
+        return str(self.properties)
+
+    def __getattr__(self, n):
+        return self.properties[n]
+
+    def __setattr__(self, n, v):
+        self.__dict__['properties'][n] = v
+        self.dirty = True
+
+    def _save(self):
+        if self.dirty:
+            self.dirty = False
+
+class Node(Base):
+
+    def __init__(self, **props):
+        super(Node, self).__init__(**props)
+        self.__dict__['rel_proxy'] = _RelationshipsProxy(self)  #NOTE: not persisted
+        self.__dict__['relationships'] = self.__dict__['rel_proxy']  #NOTE: not persisted
+        self.__dict__['relationship_list'] = []   #NOTE: not persisted
+        t = entities.Node()
+        t.put()
+
+    def __str__(self):
+        return "Node with properties: " + str(self.properties)
+
+    def _save(self):
+        super(Node, self)._save()
+
+class RelationshipType(object):
+
+    store = {}  # NOTE: persisted
+
+    def __init__(self, name):
+        self.type_name = name
+        t = entities.RelationshipType(name=self.type_name)
+        t.put()
+
+    @classmethod
+    def create(cls, name):
+        rt = RelationshipType.find(name)
+        if rt is None:
+            rt = RelationshipType(name)
+        return rt
+
+    @classmethod
+    def find(cls, name):
+        if name in cls.store:
+            return cls.store[name]
+        else:
+            return None
+
+    def name(self):
+        return self.type_name
+    
+class Relationship(Base):
+
+    def __init__(self, name, start, end, **props):
+        super(Relationship,self).__init__(**props)
+        self.start_node = start
+        self.end_node = end
+        self.type = RelationshipType.create(name)
+
+
+    def start(self):
+        return self.start_node
+
+    def end(self):
+        return self.end_node
+
+    def __str__(self):
+        return "Relationship from " + str(self.start()) + " to " + str(self.end()) + " with name " + self.type.name() + " and properties: " + str(self.properties)
+
+class Db(object):
+
+    def __init__(self):
+        self.reference_node = Node()
+
+    def reference_node(self):
+        return self.reference_node
+
+if __name__ == "__main__":
+
+    n0 = Node(name="root", value="B")
+    nl = Node(name="left", value="A")
+    nr = Node(name="right", value="C")
+
+    n0.relationships.create("LEFT", nl)
+    n0.relationships.create("RIGHT", nr)
+    nl.relationships.create("NEXT SIBLING", nr)
+
+    print nl, " --- and its relationships are:"
+    for r in nl.relationships:
+        print r
+
+    print " --- outgoing only are :"
+    for r in nl.relationships.outgoing:
+        print r
+
+    print " --- incoming only are :"
+    for r in nl.relationships.incoming:
+        print r
