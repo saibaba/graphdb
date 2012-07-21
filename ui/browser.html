@@ -2,8 +2,9 @@
     <head><title>Generic Graph browser via links</title></head>
 
     <body>
-        <h2>Node Attributes:</h2>
+        <h2>Node Info:</h2>
         <ul>
+         <li>Node id: {{ node_id }}</li>
         {% for ap in ref.attributes %}
           <li>
           {{ ap.name }} =  {{ ap.value }}

@@ -109,6 +109,8 @@ class Attribute(object):
         qr = q.fetch(1000)
         return qr
 
+
+
 class RelationshipType(object):
 
     def __init__(self, type_name = None, id=None):
@@ -206,6 +208,31 @@ class Node(object):
     def findById(cls, id):
         rv =  Node.find(id=id)
         return rv[0] if (rv is not None and len(rv) > 0) else None
+
+    @classmethod
+    def findWithProperties(cls, **props):
+        candidates = {}
+        first = True
+        pc = 0
+        for a,v in props.items():
+            q = entities.filteredEntity(entities.Attribute, name=a, value=v)
+            qr = q.fetch(1000)
+            for qr in q:
+                if first:
+                    candidates[qr.owner_id] = 1
+                else:
+                    if qr.owner_id in candidates:
+                        candidates[qr.owner_id] = candidates[qr.owner_id] + 1
+
+            first = False
+            pc += 1
+
+        ids = []
+        for nid, c in candidates.items():
+            if c == pc: ids.append(nid)
+
+        nodes = [Node(nid) for nid in ids]
+        return nodes
 
 class Relationship(object):
 

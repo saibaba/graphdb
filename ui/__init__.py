@@ -78,6 +78,33 @@ class Browser(webapp2.RequestHandler):
             if 'from_node_id' in r:
                 n1 = Node.findById(r['from_node_id'])
                 n1.relationships.create(r['type'], n)
+            if 'from' in r:
+                s = r['from']
+                n1q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
+                for k in n1q:
+                    if k == "ref":
+                        n1q[k] = True
+
+                n1 = Node.findWithProperties(**n1q)
+                if len(n1) > 0:
+                    n1 = n1[0]
+                    n1.relationships.create(r['type'], n)
+                else:
+                    self.response.out.write("From node with properties:" + str(n1q) + " not found")
+                    return
+            if 'to' in r:
+                s = r['to']
+                n2q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
+                for k in n2q:
+                    if k == "ref":
+                        n2q[k] = True
+                n2 = Node.findWithProperties(**n2q)
+                if len(n2) > 0:
+                    n2 = n2[0]
+                    n.relationships.create(r['type'], n2)
+                else:
+                    self.response.out.write("To node with properties:" + str(n2q) + " not found")
+                    return
 
         return self.get()
 
@@ -157,7 +184,7 @@ class Browser(webapp2.RequestHandler):
             for rap in r.attributes():
                 tref['relationships']['incoming']['attributes'].append({'name' : rap.name, 'value' : rap.value })
 
-        template_values = { 'start_node_url' : '/browser/' + start_node_id, 'ref': tref }
+        template_values = { 'node_id': start_node_id, 'start_node_url' : '/browser/' + start_node_id, 'ref': tref }
   
         path = os.path.join(os.path.dirname(__file__), 'browser.html')
 
