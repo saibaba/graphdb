@@ -45,9 +45,9 @@ class _RelationshipsProxy(object):
 
     def __iter__(self):
         if self.type_name is not None:
-            return self.iter_type_filtered()
+            return iter(self.iter_type_filtered())
         else:
-            return self.iter_generic()
+            return iter(self.iter_generic())
 
     def iter_generic(self):
 

@@ -1,6 +1,7 @@
 from api.graph import Db, Node
 import webapp2
 import json
+import logging
 
 class VersionHandler(webapp2.RequestHandler):
     def get(self):
@@ -9,10 +10,16 @@ class VersionHandler(webapp2.RequestHandler):
 def _catalog_root():
     db = Db()
     ref = db.reference_node
+    n = None
     for r in ref.relationships.outgoing['CATALOGS_REF']:
-        return r.end()
+        n =  r.end()
+        break
     else:
-        return ref.relationships.create("CATALOGS_REF", Node(name="CATALOGS_ROOT"))
+        logging.info("*** could not find the catalog root , creating one!!!")
+        n = Node(name="CATALOGS_ROOT")
+        ref.relationships.create("CATALOGS_REF", n)
+
+    return n
 
 class Catalogs(webapp2.RequestHandler):
 
@@ -38,8 +45,25 @@ class Catalogs(webapp2.RequestHandler):
         self.response.out.write("Catalog created!")
 
     def get(self):
-        #ref = _catalog_root()
-        self.response.out.write("Will list all")
+        ref = _catalog_root()
+
+        logging.info(ref)
+
+        self.response.headers['Content-Type']  = "application/json"
+
+        rv = {'catalogs' : [] }
+
+        self.response.status = "200 OK"
+
+        for r in ref.relationships.outgoing.CATALOG_REL:
+            rv['catalogs'].append(r.end().name)
+        """
+        else:
+            self.response.status = "404 Not Found"
+            rv = {"message": "No catalog found" }
+        """
+
+        self.response.out.write(json.dumps(rv))
 
 class Catalog(webapp2.RequestHandler):
 
