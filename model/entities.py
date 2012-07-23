@@ -41,3 +41,10 @@ def filteredEntity(entity, **filter):
         eq.filter(n + " = ", v)
 
     return eq
+
+def delete(entity, **filter):
+    eq = filteredEntity(entity, **filter)
+    rows = eq.fetch(1000)
+    for row in rows:
+        row.delete()
+

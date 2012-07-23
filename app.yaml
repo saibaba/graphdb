@@ -12,6 +12,9 @@ handlers:
 - url: /browser/.*
   script: ui.application
 
+- url: /prodcat/.*
+  script: prodcat.catalog.application
+
 builtins:
 - appstats: on
 - deferred: on

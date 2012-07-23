@@ -7,11 +7,15 @@ class _RelationshipsProxy(object):
     DIR_OUT = 1
     DIR_BOTH = 2
 
-    def __init__(self, owner_node, direction = DIR_BOTH):
+    def __init__(self, owner_node, direction = DIR_BOTH, type_name = None):
         self.owner_node = owner_node
         self.direction = direction
+        self.type_name = type_name
 
     def create(self, name, target_node, **props):
+        if self.type_name is not None and self.type_name != name:
+            raise Exception("This relationship iterator is already prefixed by another type name: " + self.type_name + " and cannot be used to create relationships of type: " + name)
+
         if self.direction == _RelationshipsProxy.DIR_OUT or self.direction == _RelationshipsProxy.DIR_BOTH:
             r = Relationship(name, self.owner_node, target_node, **props)
         elif self.direction == _RelationshipsProxy.DIR_IN:
@@ -20,10 +24,10 @@ class _RelationshipsProxy(object):
         return r
 
     def outgoing_func(self):
-        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_OUT)
+        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_OUT, self.type_name)
 
     def incoming_func(self):
-        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_IN)
+        return _RelationshipsProxy(self.owner_node, _RelationshipsProxy.DIR_IN, self.type_name)
 
     def __getattr__(self, n):
         if n == "incoming":
@@ -31,9 +35,21 @@ class _RelationshipsProxy(object):
         elif n == "outgoing":
             return self.outgoing_func()
         else:
-            raise AttributeError(n)
+            logging.info("*** Returning a rel proxy for rel type: " + n)
+            # return relationships of type.name() = n
+            #raise AttributeError(n)
+            return _RelationshipsProxy(self.owner_node, self.direction, n)
+
+    def __getitem__(self, key):
+       return _RelationshipsProxy(self.owner_node, self.direction, key)
 
     def __iter__(self):
+        if self.type_name is not None:
+            return self.iter_type_filtered()
+        else:
+            return self.iter_generic()
+
+    def iter_generic(self):
 
         q1 = None
         q2 = None
@@ -45,6 +61,32 @@ class _RelationshipsProxy(object):
             q1 = entities.filteredEntity(entities.Relationship, end_node_id = self.owner_node.id)
         elif self.direction == _RelationshipsProxy.DIR_OUT:
             q1 = entities.filteredEntity(entities.Relationship, start_node_id = self.owner_node.id)
+
+        if q1 is not None:
+            qr = q1.fetch(1000)
+            for r in qr:
+                yield Relationship(RelationshipType(id=r.type_id).name(), Node.findById(r.start_node_id), Node.findById(r.end_node_id), id=r.id)
+
+        if q2 is not None:
+            qr = q2.fetch(1000)
+            for r in qr:
+                yield Relationship(RelationshipType(id=r.type_id).name(), Node.findById(r.start_node_id), Node.findById(r.end_node_id), id=r.id)
+
+    def iter_type_filtered(self):
+        logging.info("*** Iterating a rel proxy for rel type: " + self.type_name) 
+
+        q1 = None
+        q2 = None
+
+        type_id = RelationshipType(type_name=self.type_name).id
+
+        if self.direction == _RelationshipsProxy.DIR_BOTH:
+            q1 = entities.filteredEntity(entities.Relationship, start_node_id = self.owner_node.id, type_id = type_id)
+            q2 = entities.filteredEntity(entities.Relationship, end_node_id = self.owner_node.id, type_id = type_id)
+        elif self.direction == _RelationshipsProxy.DIR_IN:
+            q1 = entities.filteredEntity(entities.Relationship, end_node_id = self.owner_node.id, type_id = type_id)
+        elif self.direction == _RelationshipsProxy.DIR_OUT:
+            q1 = entities.filteredEntity(entities.Relationship, start_node_id = self.owner_node.id, type_id = type_id)
 
         if q1 is not None:
             qr = q1.fetch(1000)
@@ -84,6 +126,9 @@ class Attribute(object):
 
     def __str__(self):
         return "Property("+self.name + "," + self.value +")"
+
+    def delete(self):
+        entities.delete(entities.Attribute, id=self.id) 
 
     @classmethod
     def findById(cls, id):
@@ -198,6 +243,16 @@ class Node(object):
         for p in props:
            Attribute(p, props[p], self.id)
 
+    def delete(self):
+        alist = Attribute.findAllByOwnerId(self.id)
+        for a in alist:
+            a.delete()
+
+        for r in self.relationships:
+            r.delete()
+
+        entities.delete(entities.Node, id=self.id) 
+
     @classmethod
     def find(cls, **props):
         q = entities.filteredEntity(entities.Node, **props)
@@ -277,6 +332,12 @@ class Relationship(object):
         for p in props:
            Attribute(p, props[p], self.id)
 
+
+    def delete(self):
+        alist = Attribute.findAllByOwnerId(self.id)
+        for a in alist:
+            a.delete()
+        entities.delete(entities.Relationship, id=self.id) 
 
 class Db(object):
 
