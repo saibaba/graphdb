@@ -104,6 +104,8 @@ class Attribute(object):
 
         logging.info( "attribute name = " + name+ " value = "+ str(value) +  " owner_id " + owner_id)
 
+        row = None
+
         if id is not None:
             self.id = id
         else:
@@ -112,8 +114,12 @@ class Attribute(object):
                 self.id = qr.id
             else:
                 row = entities.Attribute(id=genid(), name=name, value=value, owner_id = owner_id)
-                row.put()
                 self.id = row.id
+
+        if row is not None:
+            if value is not None:
+                row.value  = value
+            row.put()
 
     def __getattr__(self, n):
         row = Attribute.findById(self.id)
@@ -229,7 +235,7 @@ class Node(object):
         return Attribute(n, None, self.id).value
 
     def __setattr__(self, n, v):
-        Attribute(n, None, self.id).set_value(v)
+        Attribute(n, v, self.id)    #.set_value(v)
 
     def __str__(self):
         alist = Attribute.findAllByOwnerId(self.id)

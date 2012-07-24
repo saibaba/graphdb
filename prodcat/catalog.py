@@ -12,7 +12,7 @@ def _catalog_root():
     ref = db.reference_node
     n = None
     for r in ref.relationships.outgoing['CATALOGS_REF']:
-        n =  r.end()
+        n = r.end()
         break
     else:
         logging.info("*** could not find the catalog root , creating one!!!")
@@ -20,6 +20,41 @@ def _catalog_root():
         ref.relationships.create("CATALOGS_REF", n)
 
     return n
+
+def get_catalog(catalog_name):
+    ref = _catalog_root()
+    catalog = None
+
+    for r in ref.relationships.outgoing.CATALOG_REL:
+        if r.end().name == catalog_name:
+            catalog = r.end()
+            break
+
+    return catalog
+
+def get_category(parent, category_path, ndx = 0, create_if_missing=False, attributes={}):
+
+    rv = None
+
+    if len(category_path) == 0 or ndx == len(category_path): 
+        return parent
+    else:
+
+        for r in parent.relationships.outgoing.CATEGORY:
+            if r.end().name == category_path[ndx]:
+                rv = get_category(r.end(), category_path, ndx+1, create_if_missing, attributes)
+                break
+        else:
+            if create_if_missing:
+                logging.info("**** autovivify subcat:" + category_path[ndx])
+                n = Node(**attributes)
+                n.name = category_path[ndx]
+                parent.relationships.outgoing.create("CATEGORY", n)
+                rv = get_category(n, category_path, ndx+1, create_if_missing, attributes)
+            else:
+                rv = None
+
+    return rv
 
 class Catalogs(webapp2.RequestHandler):
 
@@ -38,11 +73,11 @@ class Catalogs(webapp2.RequestHandler):
             if r.end().name == catalog_name:
                 self.response.status = "409 Conflict"
                 self.response.out.write("Catalog already created!")
-                return
-
-        ref.relationships.create("CATALOG_REL" , Node(name=catalog_name))
-        self.response.status = "201 Created"
-        self.response.out.write("Catalog created!")
+                break
+        else:
+            ref.relationships.create("CATALOG_REL" , Node(name=catalog_name))
+            self.response.status = "201 Created"
+            self.response.out.write("Catalog created!")
 
     def get(self):
         ref = _catalog_root()
@@ -60,24 +95,83 @@ class Catalogs(webapp2.RequestHandler):
         """
         else:
             self.response.status = "404 Not Found"
-            rv = {"message": "No catalog found" }
+            rv = {"message": "3 No catalog found" }
         """
 
         self.response.out.write(json.dumps(rv))
 
 class Catalog(webapp2.RequestHandler):
 
-    def get(self, name=None):
-        #ref = _catalog_root()
-        if name is None:
-            self.response.out.write("Will list all")
+    def get(self, catalog_name):
+        catalog = get_catalog(catalog_name)
+        rv = {}
+
+        if catalog is None:
+            self.response.status = "404 Not Found"
+            rv = {"message": "2 No catalog with name %s found" % (catalog_name,) }
+        else: 
+            rv = dict(categories=[], attributes=[])
+            
+            for r in catalog.relationships.outgoing.CATEGORY:
+                rv['categories'].append(r.end().name)
+            for a in catalog.attributes():
+                rv['attributes'].append(dict(name=a[0],value=a[1]))
+
+        self.response.out.write(json.dumps(rv))
+
+class Category(webapp2.RequestHandler):
+   
+    def post(self, catalog_name, category_path_string):
+        catalog = get_catalog(catalog_name)
+
+        rv = {}
+        data = self.request.body
+        print data
+        attributes = json.loads(data)
+
+        if catalog is None:
+            self.response.status = "404 Not Found"
+            rv = {"message": "1 No catalog with name %s found" % (catalog_name,) }
         else:
-            self.response.out.write("Will list " + name)
+            pathelems = filter(lambda p: len(p) > 0, category_path_string.split("/"))
+            logging.info( "Will autovivify: " + category_path_string)
+            category = get_category(catalog, pathelems, create_if_missing=True, attributes=attributes)
+            self.response.status = "201 Created"
+            self.response.headers['Location'] = "/catalogs/"+catalog_name+"/"+category_path_string
+
+            self.response.out.write(json.dumps(rv))
+
+
+    def get(self, catalog_name, category_path_string):
+
+        catalog = get_catalog(catalog_name)
+
+        rv = {}
+        if catalog is None:
+            self.response.status = "404 Not Found"
+            rv = {"message": "1 No catalog with name %s found" % (catalog_name,) }
+        else:
+            pathelems = filter(lambda p: len(p) > 0, category_path_string.split("/"))
+            category = get_category(catalog, pathelems)
+            if category is None:
+                self.response.status = "404 Not Found"
+                rv = {"message": "No category path with name %s found" % ("/".join(pathelems,)) }
+            else:
+                self.response.status = "200 OK"
+                rv = dict(categories=[], attributes=[])
+                for r in category.relationships.outgoing.CATEGORY:
+                    rv['categories'].append("/catalogs/%s/%s/%s" % (catalog_name, category_path_string,r.end().name) )
+                for a in category.attributes():
+                    rv['attributes'].append(dict(name=a[0],value=a[1]))
+
+        self.response.out.write(json.dumps(rv))
+
 
 application = webapp2.WSGIApplication(
   [
     ('/prodcat/catalogs', Catalogs),
-    ('/prodcat/catalogs/(.+)', Catalog), 
+    ('/prodcat/catalogs/([^/]+)', Catalog), 
+    ('/prodcat/catalogs/([^/]+)/(.+)', Category), 
   ] , debug=True)
 
 """
