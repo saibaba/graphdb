@@ -1,8 +1,27 @@
 <html>
-    <head><title>Generic Graph browser via links</title></head>
+    <head>
+        <title>Generic Graph browser via links</title>
+        <style>
+            #content { 
+              overflow:auto; 
+              width: 100%;
+              background: gray;
+            }
+
+            #left, #right {
+              margin:5px; 
+              padding: 1em; 
+              background: white; 
+            } 
+
+            #left  { float:left;  width: 45%; }
+            #right { float:right; width: 45%;} 
+
+        </style>
+    </head>
 
     <body>
-        <h2>Node Info:</h2>
+        <h3>Node Info:</h3>
         <ul>
          <li>Node id: {{ node_id }}</li>
         {% for ap in ref.attributes %}
@@ -12,7 +31,7 @@
         {% endfor %}
          </ul>
 
-         <h2>Outgoing relations</h2>
+         <h3>Outgoing relations:</h3>
          <ul>
              {% for r in ref.relationships.outgoing %}
              <li>
@@ -28,7 +47,7 @@
 
           </ul>
 
-         <h2>Incoming relations</h2>
+         <h3>Incoming relations:</h3>
          <ul>
              {% for r in ref.relationships.incoming %}
              <li>
@@ -44,22 +63,22 @@
 
           </ul>
 
-          <h2>Create a child node</h2>
-          <div>
+          <h3>Create a child node and relationships to/from current node to the child:</h3>
+          <div id="content">
 
-          <div style="float: left;">
+              <div id="left">
           <form method="POST" action="{{ start_node_url }}">
-              <textarea name="yaml" rows="20" cols="100">#Post your yaml here to create a node as a child</textarea>
+              <textarea name="yaml" rows="20" cols="70">#Post your yaml here to create a node as a child</textarea>
               <br/>
-              <input type="submit" />
+              <input type="submit" value="Create"/>
           </form>
           </div>
-          <div style="float: right;">
+          <div id="right">
           <pre>
           #here is a sample
           node:
             properties:
-              name : down
+              name: down
               value: D
 
             relations:
@@ -69,6 +88,9 @@
                 type: FOE
           </pre>
           </div>
+
+          <br style="clear:both;"/>
+
         </div>
 
     </body>
