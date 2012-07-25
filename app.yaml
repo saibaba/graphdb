@@ -15,6 +15,9 @@ handlers:
 - url: /prodcat/.*
   script: prodcat.catalog.application
 
+- url: /graphdb/.*
+  script: api.application
+
 builtins:
 - appstats: on
 - deferred: on
