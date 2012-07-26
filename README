@@ -1,6 +1,6 @@
 Graph DB as a service - many concepts are borrowed from neo4j.
 
-There is always a reference node: "/graphdb/ref".
+There is always a reference node: "/graphdb/ref" eventhough it is not mandatory to use in a relationship graph.
 Nodes are identified by a GUUID, called node_id below.
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
 
