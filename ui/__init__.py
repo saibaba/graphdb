@@ -104,13 +104,9 @@ class Browser(webapp2.RequestHandler):
 
         tref['relationships'] = dict(outgoing=[], incoming=[])
         for r in ref.relationships.outgoing:
-            tref['relationships']['outgoing'].append( { 'end_url' : '/browser/' + r.end().id, 'type_name' : r.type.name(), 'attributes' : [] } )
-            for rap in r.attributes():
-                tref['relationships']['outgoing']['attributes'].append({'name' : rap.name, 'value' : rap.value })
+            tref['relationships']['outgoing'].append( { 'end_url' : '/browser/' + r.end().id, 'type_name' : r.type.name(), 'attributes' : [{'name': rap[0], 'value': rap[1]} for rap in r.attributes() ] } )
         for r in ref.relationships.incoming:
-            tref['relationships']['incoming'].append( { 'start_url' : '/browser/' + r.start().id, 'type_name' : r.type.name(), 'attributes' : [] } )
-            for rap in r.attributes():
-                tref['relationships']['incoming']['attributes'].append({'name' : rap.name, 'value' : rap.value })
+            tref['relationships']['incoming'].append( { 'start_url' : '/browser/' + r.start().id, 'type_name' : r.type.name(), 'attributes' :   [{'name': rap[0], 'value': rap[1]} for rap in r.attributes() ] } )
 
         template_values = { 'node_id': start_node_id, 'start_node_url' : '/browser/' + start_node_id, 'ref': tref }
   

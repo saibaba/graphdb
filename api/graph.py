@@ -278,12 +278,12 @@ class Node(object):
         for a,v in props.items():
             q = entities.filteredEntity(entities.Attribute, name=a, value=v)
             qr = q.fetch(1000)
-            for qr in q:
+            for qri in qr:
                 if first:
-                    candidates[qr.owner_id] = 1
+                    candidates[qri.owner_id] = 1
                 else:
-                    if qr.owner_id in candidates:
-                        candidates[qr.owner_id] = candidates[qr.owner_id] + 1
+                    if qri.owner_id in candidates:
+                        candidates[qri.owner_id] = candidates[qri.owner_id] + 1
 
             first = False
             pc += 1
@@ -292,7 +292,11 @@ class Node(object):
         for nid, c in candidates.items():
             if c == pc: ids.append(nid)
 
-        nodes = [Node(nid) for nid in ids]
+        nodes = []
+        for nid in ids:
+            n = Node.findById(nid)
+            if n is not None:
+                nodes.append(n)
         return nodes
 
 class Relationship(object):

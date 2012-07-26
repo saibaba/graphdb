@@ -64,7 +64,7 @@ A curl sssion that creates a structure like the one in http://blog.neo4j.org/201
 
    (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Name }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/74b08c8e-acac-4e12-8b9c-86ff8cd1da7
+       Location: http://127.0.0.1:9080/graphdb/408dfab4-a4d8-4256-91cc-60a482ef37c6
 
    (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Frequency, Unit: MHz }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
@@ -99,10 +99,39 @@ A curl sssion that creates a structure like the one in http://blog.neo4j.org/201
 
    (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Desktops }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/22d83258-e476-4723-a447-4cb0b475b2e2
+       Location: http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e
 
    (d) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Laptops }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
 
        Location: http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9
 
-5)
+   (e) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Cameras }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
+
+       Location: http://127.0.0.1:9080/graphdb/f7503f2a-e5a8-406d-ba56-5f84ab41149d
+
+5) Add Atributes to Electornics:
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Name), type: ATTRIBUTE, properties: { Name: Name, Required: Truex } } ]"
+   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Currency), type: ATTRIBUTE, properties: { Name: Price, Required: Truex } } ]"
+   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Weight, Required: Truex } } ]"
+
+6) Add Attributes to Computers
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Shipping Weight, Required: Truex } } ]"
+   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "relations: [ { to: Node(Name=Frequency), type: ATTRIBUTE, properties: { Name: CPU Frequency, Required: Truex } } ]"
+
+7) Add Attributes to Desktops
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "relations: [ { to: Node(Name=Count), type: ATTRIBUTE, properties: { Name: Expansion slots, DefaultValue: '4' } } ]"
+
+8) Add attributes to Laptops
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9  --data "relations: [ { to: Node(Name=Length), type: ATTRIBUTE, properties: { Name: Display Size, DefaultValue: '15.0' } } ]"
+
+9) Add Product Items
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "node: { properties: {CPU Frequency: '3000', Name: Dell Desktop, Price: '890.0', Shipping Weight: '22.3', Weight: '17.1' }, relations: [ { from: parent, type: PRODUCT } ] }"
+
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9 --data "node: { properties: {CPU Frequency: '2000', Name: HP Laptop, Price: '1200.0', Shipping Weight: '6.3', Weight: '3.5' }, relations: [ { from: parent, type: PRODUCT } ] }"
+
+

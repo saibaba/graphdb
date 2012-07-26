@@ -20,26 +20,51 @@ class NodeAPI(webapp2.RequestHandler):
             node_id = reference()
 
         data = self.request.body
+
+        if data is None or len(data) == 0:
+            self.response.status = "400 Bad Request"
+            return
+
         yaml_data = yaml.load(data)
 
-        pl = yaml_data['node']['properties']
+        pl = {}
+        rl = []
+        n = Node.findById(node_id)
 
-        n = Node(**pl)
-        rl = yaml_data['node']['relations']
+        if 'node' in yaml_data:
+            pl = yaml_data['node']['properties']
+            n = Node(**pl)
+            if 'relations' in yaml_data['node']:
+                rl = yaml_data['node']['relations']
+        elif 'relations' in yaml_data:
+            rl = yaml_data['relations']
+
 
         for r in rl:
 
             logging.info("**** Adding relation: " + r['type'])
 
+            rpl = {}
+            if 'properties' in r:
+                rpl = r['properties']
+
+            n1 = None
+            n2 = None
+
+            message = ""
+
             if 'to_node_id' in r:
                 n2 = Node.findById(r['to_node_id'])
-                n.relationships.create(r['type'], n2)
-                self.response.status = "200 OK"
+                if n2 is None:
+                    message += "Node with id: " + r['to_node_id'] + " does not exist"
+
+                n1 = n
 
             elif 'from_node_id' in r:
                 n1 = Node.findById(r['from_node_id'])
-                n1.relationships.create(r['type'], n)
-                self.response.status = "200 OK"
+                if n1 is None:
+                    message += "Node with id: " + r['from_node_id'] + " does not exist"
+                n2 = n
 
             elif 'from' in r:
                 s = r['from']
@@ -52,17 +77,15 @@ class NodeAPI(webapp2.RequestHandler):
                 else:
                     n1q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
                     n1 = Node.findWithProperties(**n1q)
-                    if len(n1) > 0:
+                    if len(n1) == 1:
                         n1 = n1[0]
-
-                if n1 is not None:
-                    logging.info("\t **** Adding relation: from " +  str(n1) + " to " + str(n))
-                    n1.relationships.create(r['type'], n)
-                    self.response.status = "200 OK"
-                else:
-                    self.response.status = "404 Not Found"
-                    self.response.out.write("From node " + s + " not found")
-
+                    elif len(n1) > 1:
+                        message += "Could not find a unique node nodes with props: "  + str(n1q)
+                        n1 = None
+                    else:
+                        message += "Could not find a node nodes with props: "  + str(n1q)
+                        n1 = None
+                n2 = n
 
             elif 'to' in r:
                 s = r['to']
@@ -75,18 +98,28 @@ class NodeAPI(webapp2.RequestHandler):
                 else:
                     n2q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
                     n2 = Node.findWithProperties(**n2q)
-                    if len(n2) > 0:
+                    if len(n2) == 1:
                         n2 = n2[0]
-                
-                if n2 is not None:
-                    n.relationships.create(r['type'], n2)
-                    self.response.status = "200 OK"
-                else:
-                    self.response.status = "404 Not Found"
-                    self.response.out.write("To node " + s + " not found")
+                    elif len(n2) > 1:
+                        message += "Could not find a unique node nodes with props: "  + str(n2q)
+                        for n2i in n2:
+                            logging.info("**** " + n2i.id)
+                        n2 = None
+                    else:
+                        message += "Could not find a node nodes with props: "  + str(n2q)
+                        n2 = None
+               
+                n1 = n
 
         self.response.headers['Content-Type']  = "application/json"
-        self.response.headers['Location'] = "/graphdb/" + n.id
+        self.response.headers['Location'] = "/graphdb/" + str(n.id)
+
+        if n1 is not None and n2 is not None:
+            n1.relationships.create(r['type'], n2, **rpl)
+            self.response.status = "200 OK"
+        else:
+            self.response.status = "404 Not Found"
+            self.response.out.write(str(message))
 
     def get(self, node_id):
 
