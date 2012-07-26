@@ -4,6 +4,8 @@ import json
 import logging
 import yaml
 import re
+import os
+from google.appengine.ext.webapp import template
 
 class VersionHandler(webapp2.RequestHandler):
     def get(self):
@@ -16,15 +18,37 @@ def reference():
 class NodeAPI(webapp2.RequestHandler):
 
     def node_id_to_node(self, node_id):
+        n = None
+        msg = "Node with id: " + node_id + " does not exist"
         if node_id == "ref":
-            node_id = reference()
-
-        n = Node.findById(node_id)
-
+            n = reference()
+        elif node_id.startswith("Node"):
+            logging.info("trying spec..............")
+            n,msg = self.spec_to_node(None, node_id)
+        else:
+            n = Node.findById(node_id)
+ 
+        logging.info("*****" + str(n))
+        logging.info("*****" + msg)
         if n is None:
-            self.abort(404, "Node with id: " + node_id + " does not exist")
+            self.abort(404, msg)
 
         return n
+
+    def convert_to_yaml(self, data):
+
+        if data is None or len(data) == 0:
+            self.abort(400, "Body content is missing or empty")
+
+        yaml_data = None
+
+        try:
+            yaml_data = yaml.load(data)
+        except Exception, e:
+            logging.error(e)
+            self.abort(400, "Bad input content, cannot parse yaml")
+
+        return yaml_data
 
     def get_input_as_yaml(self):
         data = self.request.body
@@ -45,7 +69,7 @@ class NodeAPI(webapp2.RequestHandler):
 
     def is_uuid4(self, spec):
         #http://stackoverflow.com/questions/11384589/what-is-the-correct-regex-for-matching-values-generated-by-uuid-uuid4-hex
-        uuid4= re.compile('[0-9a-f]{8}-[]{4}-[]{4}-[]{4}-[]{12}\Z', re.I)
+        uuid4= re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z', re.I)
         return uuid4.match(spec) is not None
 
     def spec_to_node(self, current, spec):
@@ -69,6 +93,7 @@ class NodeAPI(webapp2.RequestHandler):
             elif len(n) > 1:
                 message += "Could not find a unique node nodes with props: "  + str(nq)
             else:
+                n = None
                 message += "Could not find a node nodes with props: "  + str(nq)
 
         return (n, message)
@@ -84,48 +109,32 @@ class NodeAPI(webapp2.RequestHandler):
     def put(self, node_id):
 
         n = self.node_id_to_node(node_id)
-        yaml_data = self.get_input_as_yaml()
+        yaml_data = self.convert_to_yaml(self.request.body)
 
         if 'properties' in yaml_data:
             n.delete_properties()
             n.add_properties(yaml_data['properties'])
+        elif 'relations' in yaml_data:
+            n.delete_relations()
+            self.add_relations(yaml_data['relations'], n, n)
         else:
-            self.abort(400, "Expecting properties in the input")
+            self.abort(400, "Expecting properties or relations in the input")
 
         self.response.status = "204 OK"
         self.response.headers['Location'] = "/graphdb/" + str(n.id)
 
-    def post(self, node_id):
-
-        current = self.node_id_to_node(node_id)
-        yaml_data = self.get_input_as_yaml()
-
-        pl = {}
-        rl = []
-
-        n = None
-
-        if 'node' in yaml_data:
-            pl = yaml_data['node']['properties']
-            n = Node(**pl)
-            if 'relations' in yaml_data['node']:
-                rl = yaml_data['node']['relations']
-        elif 'relations' in yaml_data:
-            rl = yaml_data['relations']
-        elif 'properties' in yaml_data:
-            n.add_properties(yaml_data['properties'])
-
+    def add_relations(self, rl, n, current):
         for r in rl:
 
             logging.info("**** Adding relation: " + r['type'])
 
-            rpl = {}
-            if 'properties' in r:
-                rpl = r['properties']
+            rpl = r['properties'] if 'properties' in r else {}
+            for rpli in rpl:
+                if type(rpl[rpli]) != "str":
+                    rpl[rpli] = str(rpl[rpli])
 
             n1 = None
             n2 = None
-
             message = ""
 
             if 'from' in r:
@@ -142,37 +151,109 @@ class NodeAPI(webapp2.RequestHandler):
         
             if n1 is not None and n2 is not None:
                 n1.relationships.create(r['type'], n2, **rpl)
-                self.response.status = "200 OK"
+            else:
+                self.abort(404, str(message))
+
+    def post(self, node_id):
+
+        current = self.node_id_to_node(node_id)
+        yaml_data = None
+
+        if self.request.headers['Content-Type'] == "application/yaml":
+            yaml_data = self.convert_to_yaml(self.request.body)
+        else:
+            if 'yaml' in  self.request.POST:
+                yaml_data = self.convert_to_yaml(self.request.POST['yaml'])
+            else:
+                self.abort(400, "Missing input (either submit a form field named yaml or post content-type application/yaml)")
+
+        pl = {}
+        rl = []
+
+        n = current
+
+        if 'node' in yaml_data:
+            pl = yaml_data['node']['properties']
+            for pli in pl:
+                if type(pl[pli]) != "str":
+                    pl[pli] = str(pl[pli])
+            n = Node(**pl)
+            if 'relations' in yaml_data['node']:
+                rl = yaml_data['node']['relations']
+        elif 'relations' in yaml_data:
+            rl = yaml_data['relations']
+        elif 'properties' in yaml_data:
+            n.add_properties(yaml_data['properties'])
+
+        for r in rl:
+
+            logging.info("**** Adding relation: " + r['type'])
+
+            rpl = r['properties'] if 'properties' in r else {}
+            for rpli in rpl:
+                if type(rpl[rpli]) != "str":
+                    rpl[rpli] = str(rpl[rpli])
+
+            n1 = None
+            n2 = None
+            message = ""
+
+            if 'from' in r:
+                s = r['from']
+                n1, msg =  self.spec_to_node(current, s)
+                message += msg
+                n2 = n
+
+            elif 'to' in r:
+                s = r['to']
+                n2, msg =  self.spec_to_node(current, s)
+                message += msg
+                n1 = n
+        
+            if n1 is not None and n2 is not None:
+                n1.relationships.create(r['type'], n2, **rpl)
             else:
                 self.abort(404, str(message))
 
         self.response.headers['Content-Type']  = "application/json"
         self.response.headers['Location'] = "/graphdb/" + str(n.id)
 
+        if self.request.headers['Content-Type'] == "application/yaml":
+            self.response.status = "201 Created"
+        else:
+            return self.get(n.id)
 
     def get(self, node_id):
 
         ref = self.node_id_to_node(node_id)
         logging.info("Starting node to use:" + str(ref))
 
-        tref = { 'attributes' : [] }
+        tref = { 'properties' : {}  }
         for ap in ref.attributes():
-            tref['attributes'].append({'name': ap[0], 'value': ap[1]})
+            tref['properties'][ap[0]] = ap[1]
 
         tref['relationships'] = dict(outgoing=[], incoming=[])
         for r in ref.relationships.outgoing:
-            tref['relationships']['outgoing'].append( { 'link' : '/graphdb/' + r.end().id, 'type_name' : r.type.name(), 'attributes' : [] } )
+            x = {}
             for rap in r.attributes():
-                tref['relationships']['outgoing']['attributes'].append({'name' : rap.name, 'value' : rap.value })
+                x[rap[0]] = rap[1]
+            tref['relationships']['outgoing'].append( { 'link' : '/graphdb/' + r.end().id, 'type_name' : r.type.name(), 'properties' : x } )
         for r in ref.relationships.incoming:
-            tref['relationships']['incoming'].append( { 'link' : '/graphdb/' + r.start().id, 'type_name' : r.type.name(), 'attributes' : [] } )
+            x = {}
             for rap in r.attributes():
-                tref['relationships']['incoming']['attributes'].append({'name' : rap.name, 'value' : rap.value })
-
-        self.response.headers['Content-Type']  = "application/json"
+                x[rap[0]] = rap[1]
+            tref['relationships']['incoming'].append( { 'link' : '/graphdb/' + r.start().id, 'type_name' : r.type.name(), 'properties' :   x } )
 
         self.response.status = "200 OK"
-        self.response.out.write(json.dumps(tref))
+
+        if self.request.headers['Accept'] == "application/json":
+            self.response.headers['Content-Type']  = "application/json"
+            self.response.out.write(json.dumps(tref))
+        else:
+            self.response.headers['Content-Type']  = "text/html"
+            template_values = { 'node_id': ref.id, 'start_node_url' : '/graphdb/' + node_id, 'ref': tref }
+            path = os.path.join(os.path.dirname(__file__), 'browser.html')
+            self.response.out.write(template.render(path, template_values))
 
     def delete(self, node_id):
                 
@@ -183,6 +264,5 @@ class NodeAPI(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication(
   [
-    ('/graphdb/(ref)', NodeAPI),
     ('/graphdb/(.+)', NodeAPI),
   ] , debug=True)

@@ -2,13 +2,14 @@ Graph DB as a service - many concepts are borrowed from neo4j.
 
 There is always a reference node: "/graphdb/ref".
 Nodes are identified by a GUUID, called node_id below.
+You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
 
 1) Creating a child Node:
 
 Create a node as a child of an existing node (either ref or another node identified by node_id):
 POST /graphdb/(ref|{node_id})
 
-In request body, include attributes/relations in "yaml", for example, as in:
+In request body, include properties/relations in "yaml", for example, as in:
 #Here is a sample
 node:
   properties:
@@ -16,122 +17,130 @@ node:
     value: D
 
   relations:
-    - to_node_id : 97e00125-e2c4-469d-84bb-174307e7845f
+    - node: 97e00125-e2c4-469d-84bb-174307e7845f
       type: FRIEND
-    - to_node_id : 671921ba-b99e-45cd-b06c-b58132b4baed
+    - node: 671921ba-b99e-45cd-b06c-b58132b4baed
       type: FOE
 
-There are other ways to identify nodes in relationships.
+There are other ways to identify nodes in relationships as below. Also, see examples.
+
+a) from: Node(property_name=property_value, ...)
+b) to: Node(property_name=property_value, ...)
+c) from: (ref|{node_id})
+d) to: (ref|{node_id})
 
 2) Getting the details of a node:
 
-GET /graphdb/(ref|{node_id}) returns the response body with node info including attributes, outgoing relations, and incoming relations, for example:
+GET /graphdb/(ref|{node_id}) returns the response body with node info including properties, outgoing relations, and incoming relations, for example:
 
+curl -X "GET" -H "Accept: application/json"  http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9
+
+{"relationships": {"outgoing": [{"type_name": "ATTRIBUTE", "link": "/graphdb/7563023e-0e01-4f9f-b964-3d5129884282", "properties": [{"name": "DefaultValue", "value": "15.0"}, {"name": "Name", "value": "Display Size"}]}, {"type_name": "PRODUCT", "link": "/graphdb/8a5cd207-c281-4394-88cf-56c8e1f33af4", "properties": []}, {"type_name": "PRODUCT", "link": "/graphdb/91b3d76a-8fa0-467a-839e-c82e8bf42371", "properties": []}], "incoming": [{"type_name": "SUBCATEGORY", "link": "/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4", "properties": []}]}, "properties": [{"name": "Name", "value": "Laptops"}]}
+
+OR
 
 3) Updating a node:
+
 a) Replace a node:
 PUT /graphdb/{node_id}
-In request body include "yaml" attributes and relations (just like in POST) to replace with.
+
+In request body include "yaml" properties and relations (just like in POST) to replace with.
 You cannot replace content of ref node - you need to delete individual child nodes.
 
-b) Adding new attributes or relations
+b) Adding new properties or relations
+POST /graphdb/{node_id}
+
+In request body include "yaml" just properties and relations (syntax just like in POST) to append to existing properties/relations.
+You cannot replace content of ref node - you need to delete individual child nodes.
+Do not include "node".
 
 4) Removing a node:
 
 DELETE /graphdb/{node_id}
 
-Other ways to identify nodes in relationships:
-1) from: Node(attribute_name=attribute_value, ...)
-2) to: Node(attribute_name=attribute_value, ...)
-3) from_node_id : (ref|{node_id})
-4) to_node_id : (ref|{node_id})
-
-You can browse the graphdb by pointing the browser to:  /graphdb/browser/ref
+It automatically removes all incoming/outgoing relations and their properties; also deletes properties of the node.
 
 A curl sssion that creates a structure like the one in http://blog.neo4j.org/2010/03/modeling-categories-in-graph-database.html:
 
 1) Create ATTRIBUTE_REF
-   curl -v -X "POST" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: ATTRIBUTE_REF }, relations: [ { from: ref, type: ATTRIBUTE_ROOT} ] }"
+   curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: ATTRIBUTE_REF }, relations: [ { from: ref, type: ATTRIBUTE_ROOT} ] }"
 
-   ... location returned ...
-   Location: http://127.0.0.1:9080/graphdb/d9559c35-be67-4d7e-b145-e14ab4a67fd8
+   Location: http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9
 
 
 2) Create attributes
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Currency, Unit: USD }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Currency, Unit: USD }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/e86c006d-448b-4851-9911-c73ad52c8faa
+   (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Name }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Name }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
+   (c) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Frequency, Unit: MHz }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/408dfab4-a4d8-4256-91cc-60a482ef37c6
 
-   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Frequency, Unit: MHz }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
+   (d) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Length, Unit: inch }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/aa15d66e-2600-4bb0-aeca-b4553abd45a6
 
-   (d) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Length, Unit: inch }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
+   (e) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9  --data "node: { properties: {Name: Count, Unit: pcs. }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/7563023e-0e01-4f9f-b964-3d5129884282
+   (f) curl -v -X "POST"  -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Weight, Unit: Kg }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
-   (e) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Count, Unit: pcs. }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
-       Location: http://127.0.0.1:9080/graphdb/cf775c4f-e782-4ef0-9bf2-1e72469fb7ca
-       "
-
-   (f) curl -v -X "POST" http://127.0.0.1:9080/graphdb/408d3659-2b8e-45db-ac8f-79e201b006e3 --data "node: { properties: {Name: Weight, Unit: Kg }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
-
-       Location: http://127.0.0.1:9080/graphdb/8dbc59d4-0ac7-4d6f-8a0b-71fff8a19b12 
+       
 
 3) Create Products
-   curl -v -X "POST" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: Products }, relations: [ { from: ref, type: CATEGORY_ROOT } ] }"
+   curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: Products }, relations: [ { from: ref, type: CATEGORY_ROOT } ] }"
 
-   ... location returned ...
-   Location: http://127.0.0.1:9080/graphdb/d9a09431-cdf2-4e84-8d49-d7070e1f4ed5
+   Location: http://127.0.0.1:9080/graphdb/5e91e4f4-16eb-41b3-89cf-55c906ca32ec
    
 4) Create SUBCATEGORIES
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/d9a09431-cdf2-4e84-8d49-d7070e1f4ed5  --data "node: { properties: {Name: Electronics }, relations: [ { from: Node(name=Products), type: SUBCATEGORY } ] }"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/5e91e4f4-16eb-41b3-89cf-55c906ca32ec --data "node: { properties: {Name: Electronics }, relations: [ { from: Node(name=Products), type: SUBCATEGORY } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1
+       Location: http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555
+  
 
-   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Computers }, relations: [ { from: current, type: SUBCATEGORY } ] }"
+   (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555 --data "node: { properties: {Name: Computers }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4
+       Location: http://127.0.0.1:9080/graphdb/d5f9725b-dad9-4aa7-bbfa-678dfd294784
+ 
 
-   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Desktops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
+   (c) curl -v -X "POST"  -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/d5f9725b-dad9-4aa7-bbfa-678dfd294784 --data "node: { properties: {Name: Desktops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e
+       Location: http://127.0.0.1:9080/graphdb/0e924e6e-000d-4cb7-bc40-3238b0ddf713
 
-   (d) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Laptops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
-       Location: http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9
+   (d) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/d5f9725b-dad9-4aa7-bbfa-678dfd294784 --data "node: { properties: {Name: Laptops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
-   (e) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Cameras }, relations: [ { from: current, type: SUBCATEGORY } ] }"
+       Location: http://127.0.0.1:9080/graphdb/5625caca-383f-4110-ba47-260cb6676be1
 
-       Location: http://127.0.0.1:9080/graphdb/f7503f2a-e5a8-406d-ba56-5f84ab41149d
+   (e) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555 --data "node: { properties: {Name: Cameras }, relations: [ { from: current, type: SUBCATEGORY } ] }"
+
+       Location: http://127.0.0.1:9080/graphdb/45f83232-0f08-4072-a102-35ce9dbfe4fe
 
 5) Add Atributes to Electornics:
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Name), type: ATTRIBUTE, properties: { Name: Name, Required: Truex } } ]"
-   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Currency), type: ATTRIBUTE, properties: { Name: Price, Required: Truex } } ]"
-   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1 --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Weight, Required: Truex } } ]"
+
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555 --data "relations: [ { to: Node(Name=Name), type: ATTRIBUTE, properties: { Name: Name, Required: True } } ]"
+
+   (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555 --data "relations: [ { to: Node(Name=Currency), type: ATTRIBUTE, properties: { Name: Price, Required: True } } ]"
+
+   (c) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/790f3626-14b8-4655-aca3-086c15cfc555 --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Weight, Required: True } } ]"
 
 6) Add Attributes to Computers
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Shipping Weight, Required: Truex } } ]"
-   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "relations: [ { to: Node(Name=Frequency), type: ATTRIBUTE, properties: { Name: CPU Frequency, Required: Truex } } ]"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Computers\) --data "relations: [ { to: Node(Name=Weight), type: ATTRIBUTE, properties: { Name: Shipping Weight, Required: True } } ]"
+
+   (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Computers\) --data "relations: [ { to: Node(Name=Frequency), type: ATTRIBUTE, properties: { Name: CPU Frequency, Required: True } } ]"
 
 7) Add Attributes to Desktops
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "relations: [ { to: Node(Name=Count), type: ATTRIBUTE, properties: { Name: Expansion slots, DefaultValue: '4' } } ]"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Desktops\) --data "relations: [ { to: Node(Name=Count), type: ATTRIBUTE, properties: { Name: Expansion slots, DefaultValue: 4 } } ]"
 
 8) Add attributes to Laptops
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9  --data "relations: [ { to: Node(Name=Length), type: ATTRIBUTE, properties: { Name: Display Size, DefaultValue: '15.0' } } ]"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Laptops\)  --data "relations: [ { to: Node(Name=Length), type: ATTRIBUTE, properties: { Name: Display Size, DefaultValue: 15.0 } } ]"
 
 9) Add Product Items
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "node: { properties: {CPU Frequency: '3000', Name: Dell Desktop, Price: '890.0', Shipping Weight: '22.3', Weight: '17.1' }, relations: [ { from: current, type: PRODUCT } ] }"
+   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Desktops\) --data "node: { properties: {CPU Frequency: 3000, Name: Dell Desktop, Price: 890.0, Shipping Weight: 22.3, Weight: 17.1 }, relations: [ { from: current, type: PRODUCT } ] }"
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9 --data "node: { properties: {CPU Frequency: '2000', Name: HP Laptop, Price: '1200.0', Shipping Weight: '6.3', Weight: '3.5' }, relations: [ { from: current, type: PRODUCT } ] }"
+   (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/Node\(Name=Laptops\) --data "node: { properties: {CPU Frequency: 2000, Name: HP Laptop, Price: 1200.0, Shipping Weight: 6.3, Weight: 3.5 }, relations: [ { from: current, type: PRODUCT } ] }"
 
 
