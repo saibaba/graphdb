@@ -1,8 +1,13 @@
 Graph DB as a service - many concepts are borrowed from neo4j.
 
 There is always a reference node: "/graphdb/ref" eventhough it is not mandatory to use in a relationship graph.
-Nodes are identified by a GUUID, called node_id below.
+
+Nodes are identified by a GUUID, or other means as given below in examples.
+
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
+
+Directionality of relationships (incoming or outgoing) is entirely semantic and up to user to define meaning - API allows for traversing in any direction
+
 
 1) Creating a child Node:
 
