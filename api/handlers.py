@@ -3,6 +3,7 @@ import webapp2
 import json
 import logging
 import yaml
+import re
 
 class VersionHandler(webapp2.RequestHandler):
     def get(self):
@@ -41,7 +42,13 @@ class NodeAPI(webapp2.RequestHandler):
 
         return yaml_data
 
-    def find_node(self, current, spec):
+
+    def is_uuid4(self, spec):
+        #http://stackoverflow.com/questions/11384589/what-is-the-correct-regex-for-matching-values-generated-by-uuid-uuid4-hex
+        uuid4= re.compile('[0-9a-f]{8}-[]{4}-[]{4}-[]{4}-[]{12}\Z', re.I)
+        return uuid4.match(spec) is not None
+
+    def spec_to_node(self, current, spec):
 
         n = None
         message = ""
@@ -50,6 +57,10 @@ class NodeAPI(webapp2.RequestHandler):
             n = reference()
         elif spec == "current":
             n = current
+        elif self.is_uuid4(spec):
+            n = Node.findById(spec)
+            if n is None:
+                message += "Node with id: " + spec + " does not exist"
         else:
             nq = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in spec[spec.index("(")+1:spec.index(")")].strip().split(",")]])
             n = Node.findWithProperties(**nq)
@@ -117,29 +128,15 @@ class NodeAPI(webapp2.RequestHandler):
 
             message = ""
 
-            if 'to_node_id' in r:
-                n2 = Node.findById(r['to_node_id'])
-                if n2 is None:
-                    message += "Node with id: " + r['to_node_id'] + " does not exist"
-
-                n1 = n
-
-            elif 'from_node_id' in r:
-                n1 = Node.findById(r['from_node_id'])
-                if n1 is None:
-                    message += "Node with id: " + r['from_node_id'] + " does not exist"
-                n2 = n
-
-            elif 'from' in r:
-
+            if 'from' in r:
                 s = r['from']
-                n1, msg =  self.find_node(current, s)
+                n1, msg =  self.spec_to_node(current, s)
                 message += msg
                 n2 = n
 
             elif 'to' in r:
                 s = r['to']
-                n2, msg =  self.find_node(current, s)
+                n2, msg =  self.spec_to_node(current, s)
                 message += msg
                 n1 = n
         
