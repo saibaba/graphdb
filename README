@@ -93,19 +93,19 @@ A curl sssion that creates a structure like the one in http://blog.neo4j.org/201
 
        Location: http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1
 
-   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Computers }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
+   (b) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Computers }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
        Location: http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4
 
-   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Desktops }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
+   (c) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Desktops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
        Location: http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e
 
-   (d) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Laptops }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
+   (d) curl -v -X "POST" http://127.0.0.1:9080/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4 --data "node: { properties: {Name: Laptops }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
        Location: http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9
 
-   (e) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Cameras }, relations: [ { from: parent, type: SUBCATEGORY } ] }"
+   (e) curl -v -X "POST" http://127.0.0.1:9080/graphdb/07af1479-5a36-45dc-a7e2-be7157447ac1  --data "node: { properties: {Name: Cameras }, relations: [ { from: current, type: SUBCATEGORY } ] }"
 
        Location: http://127.0.0.1:9080/graphdb/f7503f2a-e5a8-406d-ba56-5f84ab41149d
 
@@ -130,8 +130,8 @@ A curl sssion that creates a structure like the one in http://blog.neo4j.org/201
 
 9) Add Product Items
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "node: { properties: {CPU Frequency: '3000', Name: Dell Desktop, Price: '890.0', Shipping Weight: '22.3', Weight: '17.1' }, relations: [ { from: parent, type: PRODUCT } ] }"
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/0c34fa23-b5b7-471e-ae46-feb12b3d749e --data "node: { properties: {CPU Frequency: '3000', Name: Dell Desktop, Price: '890.0', Shipping Weight: '22.3', Weight: '17.1' }, relations: [ { from: current, type: PRODUCT } ] }"
 
-   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9 --data "node: { properties: {CPU Frequency: '2000', Name: HP Laptop, Price: '1200.0', Shipping Weight: '6.3', Weight: '3.5' }, relations: [ { from: parent, type: PRODUCT } ] }"
+   (a) curl -v -X "POST" http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9 --data "node: { properties: {CPU Frequency: '2000', Name: HP Laptop, Price: '1200.0', Shipping Weight: '6.3', Weight: '3.5' }, relations: [ { from: current, type: PRODUCT } ] }"
 
 

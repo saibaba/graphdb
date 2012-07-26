@@ -14,6 +14,27 @@ def reference():
 
 class NodeAPI(webapp2.RequestHandler):
 
+    def put(self, node_id):
+        if node_id == "ref":
+            node_id = reference()
+
+        data = self.request.body
+
+        if data is None or len(data) == 0:
+            self.response.status = "400 Bad Request"
+            return
+
+        yaml_data = yaml.load(data)
+
+        n = Node.findById(node_id)
+
+        if 'properties' in yaml_data:
+            n.delete_properties()
+            n.add_properties(yaml_data['properties'])
+
+        self.response.status = "200 OK"
+        self.response.headers['Location'] = "/graphdb/" + str(n.id)
+
     def post(self, node_id):
 
         if node_id == "ref":
@@ -38,6 +59,8 @@ class NodeAPI(webapp2.RequestHandler):
                 rl = yaml_data['node']['relations']
         elif 'relations' in yaml_data:
             rl = yaml_data['relations']
+        elif 'properties' in yaml_data:
+            n.add_properties(yaml_data['properties'])
 
 
         for r in rl:
@@ -72,7 +95,7 @@ class NodeAPI(webapp2.RequestHandler):
                 n1 = None
                 if s == "ref":
                     n1 = reference()
-                elif s == "parent":
+                elif s == "current":
                     n1 = Node.findById(node_id)
                 else:
                     n1q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
@@ -93,7 +116,7 @@ class NodeAPI(webapp2.RequestHandler):
                 n2 = None
                 if s == "ref":
                     n2 = reference()
-                elif s == "parent":
+                elif s == "current":
                     n2 = Node.findById(node_id)
                 else:
                     n2q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
@@ -110,16 +133,18 @@ class NodeAPI(webapp2.RequestHandler):
                         n2 = None
                
                 n1 = n
+        
+            if n1 is not None and n2 is not None:
+                n1.relationships.create(r['type'], n2, **rpl)
+                self.response.status = "200 OK"
+            else:
+                self.response.status = "404 Not Found"
+                self.response.out.write(str(message))
+                break
 
         self.response.headers['Content-Type']  = "application/json"
         self.response.headers['Location'] = "/graphdb/" + str(n.id)
 
-        if n1 is not None and n2 is not None:
-            n1.relationships.create(r['type'], n2, **rpl)
-            self.response.status = "200 OK"
-        else:
-            self.response.status = "404 Not Found"
-            self.response.out.write(str(message))
 
     def get(self, node_id):
 

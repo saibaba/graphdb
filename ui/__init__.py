@@ -19,26 +19,6 @@ class Browser(webapp2.RequestHandler):
         if node is None:
             node = db.reference_node
 
-        """
-        node:
-          properties:
-             name: root
-             value: A
-
-          relations:
-             
-             - to_node_id : 1234
-               type: FRIEND
-             - to_node_id : 3421
-               type: FOE
-
-          {'node': {'properties': { "name": "root", "value" : "A" },
-                    'relations': [{'to_node_id': 1234, 'type': 'FRIEND'},
-                                                                     {'to_node_id': 3421, 'type': 'FOE'}]
-                   }
-          }
-        """
-
         logging.info( "***REQ:" +  self.request.POST['yaml'])
         data = yaml.load(self.request.POST['yaml'])
         logging.info( "***YAML:" +  str(data))
@@ -82,7 +62,7 @@ class Browser(webapp2.RequestHandler):
                     self.response.out.write("To node with properties:" + str(n2q) + " not found")
                     return
 
-        return self.get()
+        return self.get(start_node_id)
 
     def get(self, start_node_id):
 
@@ -108,7 +88,7 @@ class Browser(webapp2.RequestHandler):
         for r in ref.relationships.incoming:
             tref['relationships']['incoming'].append( { 'start_url' : '/browser/' + r.start().id, 'type_name' : r.type.name(), 'attributes' :   [{'name': rap[0], 'value': rap[1]} for rap in r.attributes() ] } )
 
-        template_values = { 'node_id': start_node_id, 'start_node_url' : '/browser/' + start_node_id, 'ref': tref }
+        template_values = { 'node_id': ref.id, 'start_node_url' : '/browser/' + start_node_id, 'ref': tref }
   
         path = os.path.join(os.path.dirname(__file__), 'browser.html')
 

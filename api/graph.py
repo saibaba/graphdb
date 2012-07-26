@@ -237,6 +237,12 @@ class Node(object):
     def __setattr__(self, n, v):
         Attribute(n, v, self.id)    #.set_value(v)
 
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
     def __str__(self):
         alist = Attribute.findAllByOwnerId(self.id)
         return "Node with properties:" + ";".join([str((a.name, a.value)) for a in alist])
@@ -250,14 +256,22 @@ class Node(object):
            Attribute(p, props[p], self.id)
 
     def delete(self):
-        alist = Attribute.findAllByOwnerId(self.id)
-        for a in alist:
-            a.delete()
+        self.delete_properties()
+        self.delete_relations()
+        entities.delete(entities.Node, id=self.id) 
 
+    def delete_relations(self):
         for r in self.relationships:
             r.delete()
 
-        entities.delete(entities.Node, id=self.id) 
+    def add_properties(self, propdict):
+        for a,v in propdict.items():
+            self[a] = v
+
+    def delete_properties(self):
+        alist = Attribute.findAllByOwnerId(self.id)
+        for a in alist:
+            a.delete()
 
     @classmethod
     def find(cls, **props):
