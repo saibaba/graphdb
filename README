@@ -8,6 +8,7 @@ You can browse through the nodes and create new nodes/relations by starting at: 
 
 Directionality of relationships (incoming or outgoing) is entirely semantic and up to user to define meaning - API allows for traversing in any direction
 
+You can use ref (or  any) node to create new nodes even if the new ones are not related to it.
 
 1) Creating a child Node:
 
