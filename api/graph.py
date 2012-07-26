@@ -1,6 +1,7 @@
 from model import entities
 from util import genid
 import logging
+from google.appengine.ext import db
 
 class _RelationshipsProxy(object):
     DIR_IN = 0

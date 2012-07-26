@@ -9,48 +9,90 @@ class VersionHandler(webapp2.RequestHandler):
         self.response.out.write(dict(versions=[dict(id="1.0", status="BETA")]))
 
 def reference():
-    db = Db()
-    return db.reference_node
+    gdb = Db()
+    return gdb.reference_node
 
 class NodeAPI(webapp2.RequestHandler):
 
-    def put(self, node_id):
+    def node_id_to_node(self, node_id):
         if node_id == "ref":
             node_id = reference()
 
+        n = Node.findById(node_id)
+
+        if n is None:
+            self.abort(404, "Node with id: " + node_id + " does not exist")
+
+        return n
+
+    def get_input_as_yaml(self):
         data = self.request.body
 
         if data is None or len(data) == 0:
-            self.response.status = "400 Bad Request"
-            return
+            self.abort(400, "Body content is missing or empty")
 
-        yaml_data = yaml.load(data)
+        yaml_data = None
 
-        n = Node.findById(node_id)
+        try:
+            yaml_data = yaml.load(data)
+        except Exception, e:
+            logging.error(e)
+            self.abort(400, "Bad input content, cannot parse yaml")
+
+        return yaml_data
+
+    def find_node(self, current, spec):
+
+        n = None
+        message = ""
+
+        if spec == "ref":
+            n = reference()
+        elif spec == "current":
+            n = current
+        else:
+            nq = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in spec[spec.index("(")+1:spec.index(")")].strip().split(",")]])
+            n = Node.findWithProperties(**nq)
+            if len(n) == 1:
+                n = n[0]
+            elif len(n) > 1:
+                message += "Could not find a unique node nodes with props: "  + str(nq)
+            else:
+                message += "Could not find a node nodes with props: "  + str(nq)
+
+        return (n, message)
+        
+    def handle_exception(self, exception, debug):
+        logging.exception(exception)
+        if isinstance(exception, webapp2.HTTPException):
+            self.response.set_status(exception.code)
+            self.response.write(json.dumps(dict(message=exception.detail)))
+        else:    
+            self.response.set_status(500)
+
+    def put(self, node_id):
+
+        n = self.node_id_to_node(node_id)
+        yaml_data = self.get_input_as_yaml()
 
         if 'properties' in yaml_data:
             n.delete_properties()
             n.add_properties(yaml_data['properties'])
+        else:
+            self.abort(400, "Expecting properties in the input")
 
-        self.response.status = "200 OK"
+        self.response.status = "204 OK"
         self.response.headers['Location'] = "/graphdb/" + str(n.id)
 
     def post(self, node_id):
 
-        if node_id == "ref":
-            node_id = reference()
-
-        data = self.request.body
-
-        if data is None or len(data) == 0:
-            self.response.status = "400 Bad Request"
-            return
-
-        yaml_data = yaml.load(data)
+        current = self.node_id_to_node(node_id)
+        yaml_data = self.get_input_as_yaml()
 
         pl = {}
         rl = []
-        n = Node.findById(node_id)
+
+        n = None
 
         if 'node' in yaml_data:
             pl = yaml_data['node']['properties']
@@ -61,7 +103,6 @@ class NodeAPI(webapp2.RequestHandler):
             rl = yaml_data['relations']
         elif 'properties' in yaml_data:
             n.add_properties(yaml_data['properties'])
-
 
         for r in rl:
 
@@ -90,57 +131,23 @@ class NodeAPI(webapp2.RequestHandler):
                 n2 = n
 
             elif 'from' in r:
-                s = r['from']
 
-                n1 = None
-                if s == "ref":
-                    n1 = reference()
-                elif s == "current":
-                    n1 = Node.findById(node_id)
-                else:
-                    n1q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
-                    n1 = Node.findWithProperties(**n1q)
-                    if len(n1) == 1:
-                        n1 = n1[0]
-                    elif len(n1) > 1:
-                        message += "Could not find a unique node nodes with props: "  + str(n1q)
-                        n1 = None
-                    else:
-                        message += "Could not find a node nodes with props: "  + str(n1q)
-                        n1 = None
+                s = r['from']
+                n1, msg =  self.find_node(current, s)
+                message += msg
                 n2 = n
 
             elif 'to' in r:
                 s = r['to']
-
-                n2 = None
-                if s == "ref":
-                    n2 = reference()
-                elif s == "current":
-                    n2 = Node.findById(node_id)
-                else:
-                    n2q = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in s[s.index("(")+1:s.index(")")].strip().split(",")]])
-                    n2 = Node.findWithProperties(**n2q)
-                    if len(n2) == 1:
-                        n2 = n2[0]
-                    elif len(n2) > 1:
-                        message += "Could not find a unique node nodes with props: "  + str(n2q)
-                        for n2i in n2:
-                            logging.info("**** " + n2i.id)
-                        n2 = None
-                    else:
-                        message += "Could not find a node nodes with props: "  + str(n2q)
-                        n2 = None
-               
+                n2, msg =  self.find_node(current, s)
+                message += msg
                 n1 = n
         
             if n1 is not None and n2 is not None:
                 n1.relationships.create(r['type'], n2, **rpl)
                 self.response.status = "200 OK"
             else:
-                self.response.status = "404 Not Found"
-                self.response.out.write(str(message))
-                break
+                self.abort(404, str(message))
 
         self.response.headers['Content-Type']  = "application/json"
         self.response.headers['Location'] = "/graphdb/" + str(n.id)
@@ -148,16 +155,7 @@ class NodeAPI(webapp2.RequestHandler):
 
     def get(self, node_id):
 
-        ref = None
-        if node_id == "ref":
-            ref = reference()
-        else:
-            ref = Node.findById(node_id)
-            if ref is None:
-                self.response.status = "404 Not Found"
-                return
-                
-
+        ref = self.node_id_to_node(node_id)
         logging.info("Starting node to use:" + str(ref))
 
         tref = { 'attributes' : [] }
@@ -181,14 +179,10 @@ class NodeAPI(webapp2.RequestHandler):
 
     def delete(self, node_id):
                 
-        node = Node.findById(node_id)
-        if node is None:
-            self.response.status = "404 Not Found"
-            self.response.out.write("Node to be deleted not found")
-        else:
-            node.delete()
-            self.response.status = "200 OK"
-            self.response.out.write("Node deleted ")
+        node = self.node_id_to_node(node_id)
+        node.delete()
+        self.response.status = "200 OK"
+        self.response.out.write("Node deleted")
 
 application = webapp2.WSGIApplication(
   [
