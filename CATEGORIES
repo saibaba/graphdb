@@ -1,13 +1,17 @@
-A curl sssion that creates a structure similar to the one in http://blog.neo4j.org/2010/03/modeling-categories-in-graph-database.html:
+echo "A curl sssion that creates a structure similar to the one in http://blog.neo4j.org/2010/03/modeling-categories-in-graph-database.html:"
+####
+echo "Create ATTRIBUTE_REF"
 
-1) Create ATTRIBUTE_REF
-   curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: ATTRIBUTE_REF }, relations: [ { from: ref, type: ATTRIBUTE_ROOT} ] }"
+curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: {name: ATTRIBUTE_REF }, relations: [ { from: ref, type: ATTRIBUTE_ROOT} ] }"
 
-   Location: http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9
+# | grep Location| awk '{print $3}'
+#
+####
 
 
-2) Create attributes
-   (a) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Currency, Unit: USD }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
+echo "Create attributes"
+
+curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Currency, Unit: USD }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 
    (b) curl -v -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" http://127.0.0.1:9080/graphdb/69513eb1-2365-463c-983e-69b26ca590e9 --data "node: { properties: {Name: Name }, relations: [ { from: Node(name=ATTRIBUTE_REF), type: ATTRIBUTE_TYPE } ] }"
 

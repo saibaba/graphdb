@@ -3,6 +3,9 @@ from util import genid
 import logging
 from google.appengine.ext import db
 
+def get_tenant():
+    return "1"
+
 class _RelationshipsProxy(object):
     DIR_IN = 0
     DIR_OUT = 1
@@ -223,7 +226,7 @@ class Node(object):
     def __init__(self, id = None, ref=False, **props):
 
         if id is None:
-            row =  entities.Node(id=genid(), ref=ref)
+            row =  entities.Node(id=genid(), ref=ref, tenant=get_tenant())
             row.put()
             self.__dict__['id'] =  row.id
             self.create_properties(**props)
@@ -259,7 +262,7 @@ class Node(object):
     def delete(self):
         self.delete_properties()
         self.delete_relations()
-        entities.delete(entities.Node, id=self.id) 
+        entities.delete(entities.Node, id=self.id)
 
     def delete_relations(self):
         for r in self.relationships:
@@ -276,7 +279,7 @@ class Node(object):
 
     @classmethod
     def find(cls, **props):
-        q = entities.filteredEntity(entities.Node, **props)
+        q = entities.filteredEntity(entities.Node, tenant=get_tenant(), **props)
         qr = q.fetch(1000)
         return [Node(row.id) for row in qr]
 

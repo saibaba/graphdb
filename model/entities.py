@@ -26,6 +26,7 @@ class Attribute(ModelBase):
 
 class Node(ModelBase):
     ref = db.BooleanProperty(default=False)
+    tenant = db.StringProperty(required=True)
 
 class RelationshipType(ModelBase):
     name = db.StringProperty(required=True)

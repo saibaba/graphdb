@@ -18,6 +18,12 @@ handlers:
 - url: /graphdb/.*
   script: api.application
 
+- url: /secure
+  script: auth.application
+
+- url: /auth/.*
+  script: auth.application
+
 builtins:
 - appstats: on
 - deferred: on

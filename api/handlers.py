@@ -7,6 +7,9 @@ import re
 import os
 from google.appengine.ext.webapp import template
 
+import webapp2
+import auth
+
 class VersionHandler(webapp2.RequestHandler):
     def get(self):
         self.response.out.write(dict(versions=[dict(id="1.0", status="BETA")]))
@@ -28,8 +31,6 @@ class NodeAPI(webapp2.RequestHandler):
         else:
             n = Node.findById(node_id)
  
-        logging.info("*****" + str(n))
-        logging.info("*****" + msg)
         if n is None:
             self.abort(404, msg)
 
@@ -106,6 +107,7 @@ class NodeAPI(webapp2.RequestHandler):
         else:    
             self.response.set_status(500)
 
+    @auth.user_required
     def put(self, node_id):
 
         n = self.node_id_to_node(node_id)
@@ -154,6 +156,7 @@ class NodeAPI(webapp2.RequestHandler):
             else:
                 self.abort(404, str(message))
 
+    @auth.user_required
     def post(self, node_id):
 
         current = self.node_id_to_node(node_id)
@@ -223,6 +226,7 @@ class NodeAPI(webapp2.RequestHandler):
         else:
             return self.get(n.id)
 
+    @auth.user_required
     def get(self, node_id):
 
         ref = self.node_id_to_node(node_id)
@@ -255,6 +259,7 @@ class NodeAPI(webapp2.RequestHandler):
             path = os.path.join(os.path.dirname(__file__), 'browser.html')
             self.response.out.write(template.render(path, template_values))
 
+    @auth.user_required
     def delete(self, node_id):
                 
         node = self.node_id_to_node(node_id)
@@ -262,7 +267,10 @@ class NodeAPI(webapp2.RequestHandler):
         self.response.status = "200 OK"
         self.response.out.write("Node deleted")
 
+conf = {}
+conf['webapp2_extras.sessions'] = {'secret_key': 'my-super-secret-key'}
+
 application = webapp2.WSGIApplication(
   [
     ('/graphdb/(.+)', NodeAPI),
-  ] , debug=True)
+  ] , debug=True, config=conf)
