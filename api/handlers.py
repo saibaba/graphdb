@@ -6,9 +6,10 @@ import yaml
 import re
 import os
 from google.appengine.ext.webapp import template
-
+import threading
 import webapp2
 import auth
+
 
 class VersionHandler(webapp2.RequestHandler):
     def get(self):
@@ -158,6 +159,8 @@ class NodeAPI(webapp2.RequestHandler):
 
     @auth.user_required
     def post(self, node_id):
+
+        logging.info("**thread " + threading.current_thread().name)
 
         current = self.node_id_to_node(node_id)
         yaml_data = None

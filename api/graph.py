@@ -2,9 +2,7 @@ from model import entities
 from util import genid
 import logging
 from google.appengine.ext import db
-
-def get_tenant():
-    return "1"
+from context import get_tenant
 
 class _RelationshipsProxy(object):
     DIR_IN = 0

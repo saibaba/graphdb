@@ -32,7 +32,12 @@
 
     Notes/Reference:
         http://code.google.com/p/webapp-improved/issues/detail?id=20
-        Also, see: http://stackoverflow.com/questions/8550019/how-to-use-auth-with-webapp2-in-gae
+        http://stackoverflow.com/questions/8550019/how-to-use-auth-with-webapp2-in-gae
+        http://webapp-improved.googlecode.com/hg/tests/extras_auth_test.py?r=c84a093103d15166c8741c606e6663e9cc622aa2 - what i need i guess
+        http://webapp-improved.googlecode.com/hg/tests/extras_security_test.py
+        http://webapp-improved.googlecode.com/hg/tests/extras_appengine_auth_models_test.py
+
+
 """
 
 import webapp2
@@ -41,6 +46,7 @@ from webapp2_extras import sessions
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 import logging
+from api.context import set_tenant
 
 #@webapp2.cached_property
 def auth():
@@ -64,7 +70,31 @@ def user_required(handler):
          Will also fail if there's no session present.
      """
 
+    def check_api_login(self, *args, **kwargs):
+
+        if self.request.headers['Accept'] != "application/json":
+            return False
+
+        cred_passed  = False
+
+        try:
+            if 'X-Auth-User' in self.request.headers and 'X-Auth-Password' in self.request.headers:
+                username = self.request.headers['X-Auth-User']
+                password = self.request.headers['X-Auth-Password']
+                auth().get_user_by_password(username, password)
+                cred_passed  =  True
+                set_tenant(username)
+        except (InvalidAuthIdError, InvalidPasswordError), e:
+            pass
+
+        return cred_passed
+        
     def check_login(self, *args, **kwargs):
+
+
+        if check_api_login(self, *args, **kwargs):
+            return handler(self, *args, **kwargs)
+
         if not auth().get_user_by_session():
             # If handler has no login_url specified invoke a 403 error
             try:
@@ -137,6 +167,7 @@ class LoginHandler(BaseHandler):
         # Raises InvalidPasswordError if provided password doesn't match with specified user
         try:
             auth().get_user_by_password(username, password)
+            set_tenant(username)
             self.redirect('/graphdb/ref')
         except (InvalidAuthIdError, InvalidPasswordError), e:
             # Returns error message to self.response.write in the BaseHandler.dispatcher
