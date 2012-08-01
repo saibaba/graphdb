@@ -46,7 +46,7 @@ from webapp2_extras import sessions
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 import logging
-from api.context import set_tenant
+from context import set_tenant
 
 #@webapp2.cached_property
 def auth():
@@ -72,9 +72,6 @@ def user_required(handler):
 
     def check_api_login(self, *args, **kwargs):
 
-        if self.request.headers['Accept'] != "application/json":
-            return False
-
         cred_passed  = False
 
         try:
@@ -83,9 +80,9 @@ def user_required(handler):
                 password = self.request.headers['X-Auth-Password']
                 auth().get_user_by_password(username, password)
                 cred_passed  =  True
-                set_tenant(username)
+                set_tenant(username, "request")
         except (InvalidAuthIdError, InvalidPasswordError), e:
-            pass
+            logging.exception(e)
 
         return cred_passed
         
@@ -104,6 +101,7 @@ def user_required(handler):
                 logging.exception(e)
                 self.abort(403)
         else:
+            webapp2.get_request().environ['IN_SESSION'] = True
             return handler(self, *args, **kwargs)
 
     return check_login
@@ -167,7 +165,7 @@ class LoginHandler(BaseHandler):
         # Raises InvalidPasswordError if provided password doesn't match with specified user
         try:
             auth().get_user_by_password(username, password)
-            set_tenant(username)
+            set_tenant(username, "session")
             self.redirect('/graphdb/ref')
         except (InvalidAuthIdError, InvalidPasswordError), e:
             # Returns error message to self.response.write in the BaseHandler.dispatcher

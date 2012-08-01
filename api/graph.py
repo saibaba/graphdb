@@ -1,8 +1,6 @@
 from model import entities
 from util import genid
 import logging
-from google.appengine.ext import db
-from context import get_tenant
 
 class _RelationshipsProxy(object):
     DIR_IN = 0
@@ -162,8 +160,6 @@ class Attribute(object):
         qr = q.fetch(1000)
         return qr
 
-
-
 class RelationshipType(object):
 
     def __init__(self, type_name = None, id=None):
@@ -221,15 +217,15 @@ class Base(object):
 
 class Node(object):
 
-    def __init__(self, id = None, ref=False, **props):
+    def __init__(self, tenant, id = None, ref=False, **props):
 
         if id is None:
-            row =  entities.Node(id=genid(), ref=ref, tenant=get_tenant())
+            row =  entities.Node(id=genid(), ref=ref, tenant=tenant)
             row.put()
             self.__dict__['id'] =  row.id
             self.create_properties(**props)
         else:
-            self.__dict__['id'] =  id
+            self.__dict__['id'] = id
 
         self.__dict__['relationships'] = _RelationshipsProxy(self)  #NOTE: not persisted
 
@@ -276,18 +272,32 @@ class Node(object):
             a.delete()
 
     @classmethod
-    def find(cls, **props):
-        q = entities.filteredEntity(entities.Node, tenant=get_tenant(), **props)
+    def find(cls, tenant, **props):
+        q = entities.filteredEntity(entities.Node, tenant=tenant, **props)
         qr = q.fetch(1000)
-        return [Node(row.id) for row in qr]
+        return [Node(tenant, id = row.id) for row in qr]
+
+    @classmethod
+    def findn(cls, tenant, n = 10, page_no = 1):
+
+        # https://developers.google.com/appengine/docs/python/datastore/queries#Query_Cursors
+
+        q = entities.filteredEntity(entities.Node, tenant=tenant)
+        qr = q.fetch(1000)
+
+        return [Node(tenant, id = row.id) for row in qr]
 
     @classmethod
     def findById(cls, id):
-        rv =  Node.find(id=id)
-        return rv[0] if (rv is not None and len(rv) > 0) else None
+        q = entities.filteredEntity(entities.Node, id = id)
+        qr = q.fetch(1)
+        if len(qr) > 0:
+            return Node(qr[0].tenant, id=qr[0].id)
+        else:
+            return None
 
     @classmethod
-    def findWithProperties(cls, **props):
+    def findWithProperties(cls, tenant, **props):
         candidates = {}
         first = True
         pc = 0
@@ -311,7 +321,7 @@ class Node(object):
         nodes = []
         for nid in ids:
             n = Node.findById(nid)
-            if n is not None:
+            if n is not None and n.tenant == tenant:
                 nodes.append(n)
         return nodes
 
@@ -367,21 +377,23 @@ class Relationship(object):
 
 class Db(object):
 
-    def __init__(self):
-        nodes = Node.find(ref=True)
+    def __init__(self, tenant):
+        nodes = Node.find(tenant, ref=True)
         if len(nodes) == 0:
-            self.reference_node = Node(ref=True)
+            self.reference_node = Node(tenant, ref=True)
         else:
             self.reference_node = nodes[0]
         logging.info("******** reference node: " + str(self.reference_node) + " with id: " + self.reference_node.id)
 
 if __name__ == "__main__":
 
-    db = Db()
+    mydb = Db()
 
-    n0 = Node(name="root", value="B")
-    nl = Node(name="left", value="A")
-    nr = Node(name="right", value="C")
+    print mydb.reference()
+
+    n0 = Node("test1", name="root", value="B")
+    nl = Node("test1", name="left", value="A")
+    nr = Node("test1", name="right", value="C")
 
     n0.relationships.create("LEFT", nl)
     n0.relationships.create("RIGHT", nr)
