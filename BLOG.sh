@@ -1,7 +1,10 @@
 #set -x
 #set -v
 
-COMMON_HEADERS="-v -X POST -H \"Content-Type: application/yaml\" -H \"Accept: application/json\" -H \"X-Auth-User: sai1\" -H \"X-Auth-Password: sai1\""
+USER="sai2"
+PASSWORD="sai2"
+
+COMMON_HEADERS="-v -X POST -H \"Content-Type: application/yaml\" -H \"Accept: application/json\" -H \"X-Auth-User: $USER\" -H \"X-Auth-Password: $PASSWORD\""
 URL=http://127.0.0.1:9080/graphdb/ref
 
 echo "Create tags"

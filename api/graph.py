@@ -223,9 +223,11 @@ class Node(object):
             row =  entities.Node(id=genid(), ref=ref, tenant=tenant)
             row.put()
             self.__dict__['id'] =  row.id
+            self.__dict__['tenant'] =  row.tenant
             self.create_properties(**props)
         else:
             self.__dict__['id'] = id
+            self.__dict__['tenant'] =  tenant
 
         self.__dict__['relationships'] = _RelationshipsProxy(self)  #NOTE: not persisted
 
@@ -271,6 +273,7 @@ class Node(object):
         for a in alist:
             a.delete()
 
+    
     @classmethod
     def find(cls, tenant, **props):
         q = entities.filteredEntity(entities.Node, tenant=tenant, **props)
