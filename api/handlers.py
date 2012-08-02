@@ -194,12 +194,19 @@ class NodeAPI(webapp2.RequestHandler):
 
         for r in rl:
 
+            if not isinstance(r, dict):
+                self.abort(400, "Could not parse the relations!")
+
             logging.info("**** Adding relation: " + r['type'])
 
             rpl = r['properties'] if 'properties' in r else {}
+            logging.info("  ** relation properties: ")
             for rpli in rpl:
+                logging.info("\t " + rpli + " = " + rpl[rpli])
                 if type(rpl[rpli]) != "str":
                     rpl[rpli] = str(rpl[rpli])
+
+
 
             n1 = None
             n2 = None
@@ -218,6 +225,7 @@ class NodeAPI(webapp2.RequestHandler):
                 n1 = n
         
             if n1 is not None and n2 is not None:
+                logging.info("n2 = " + str(n2))
                 n1.relationships.create(r['type'], n2, **rpl)
             else:
                 self.abort(404, str(message))
@@ -308,6 +316,14 @@ class NodeListerAPI(webapp2.RequestHandler):
             template_values = nodes_hash
             path = os.path.join(os.path.dirname(__file__), 'nodelist.html')
             self.response.out.write(template.render(path, template_values))
+
+    @auth.user_required
+    def delete(self):
+        nodes = Node.findn(auth.get_tenant())
+        for n in nodes:
+            n.delete()
+
+        self.response.status = "204 OK"
 
 conf = {}
 conf['webapp2_extras.sessions'] = {'secret_key': 'my-super-secret-key'}

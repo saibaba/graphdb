@@ -251,6 +251,6 @@ application = webapp2.WSGIApplication(
         webapp2.Route(r'/auth/login', handler=LoginHandler, name='login'),                                                                                                                                            
         webapp2.Route(r'/auth/logout', handler=LogoutHandler, name='logout'),
         webapp2.Route(r'/secure', handler=SecureRequestHandler, name='secure'),
-        webapp2.Route(r'/auth/create', handler=CreateUserHandler, name='create-user'),
+        webapp2.Route(r'/auth/create-user', handler=CreateUserHandler, name='create-user'),
     ]
     , debug=True, config=conf)

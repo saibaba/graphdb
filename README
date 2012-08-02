@@ -1,40 +1,56 @@
-Graph DB as a service - many concepts are borrowed from neo4j.
+Graph DB as a service - a generic API to create nodes and relationships between the nodes. Each node or relationship can have properties as name and value pairs.
 
 There is always a reference node: "/graphdb/ref" eventhough it is not mandatory to use in a relationship graph.
 
-Nodes are identified by a GUUID, or other means as given below in examples.
+Nodes are identified by a UUID, or other means as given below in examples.
 
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
 
 Directionality of relationships (incoming or outgoing) is entirely semantic and up to user to define meaning - API allows for traversing in any direction
 
-You can use ref (or  any) node to create new nodes even if the new ones are not related to it.
+You can use ref (or any) node to create new nodes even if the new ones are not related to it.
+
+Authentication/Registration:
+Before using the API, you need to register a username and password by visiting /auth/login - You need to pass the credentials in each API call.
 
 1) Creating a Node:
 
 Create a node (POSTing to either ref or another node identified by node_id):
 
-POST /graphdb/(ref|{node_id})
+POST /graphdb/<node>
+
+Format of <node>:
+a) ref
+b) node_id (the UUID)
+c) Node(property_name=property_value, ...)  # make sure to escape '(' or ')' in shell scripts
+
 
 In request body, include properties/relations in "yaml", for example, as in:
-#Here is a sample
+#yaml start
 node:
   properties:
-    name: down
-    value: D
+    title: The Matrix
+    year: 1999
+#yaml end
 
+Another example
+#yaml start
+node:
+  properties:
+    name: Keanu Reeves
   relations:
-    - node: 97e00125-e2c4-469d-84bb-174307e7845f
-      type: FRIEND
-    - node: 671921ba-b99e-45cd-b06c-b58132b4baed
-      type: FOE
+    - to: Node(title=The Matrix)
+      type: ACTS_IN
+      properties:
+        name: Neo
+#yaml end
 
-There are other ways to identify nodes in relationships as below. Also, see examples.
+Apart from the format of <node> above, there is one more way to address a node in a relationship: "current" to identify the node to which the content is posted to.
 
-a) from: Node(property_name=property_value, ...)
-b) to: Node(property_name=property_value, ...)
-c) from: (ref|{node_id})
-d) to: (ref|{node_id})
+Try above in the browser at url: /graphdb/ref.
+
+The same example using curl:
+
 
 2) Getting the details of a node:
 
@@ -67,3 +83,9 @@ DELETE /graphdb/{node_id}
 
 It automatically removes all incoming/outgoing relations and their properties; also deletes properties of the node.
 
+5) List all nodes (TODO: Pagination)
+GET /graphdb/nodes
+
+6) Delete all nodes (it also deletes the ref node - next time it is required, it will be auto-created)
+
+DELETE /graphdb/nodes

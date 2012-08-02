@@ -12,14 +12,14 @@ class _RelationshipsProxy(object):
         self.direction = direction
         self.type_name = type_name
 
-    def create(self, name, target_node, **props):
-        if self.type_name is not None and self.type_name != name:
-            raise Exception("This relationship iterator is already prefixed by another type name: " + self.type_name + " and cannot be used to create relationships of type: " + name)
+    def create(self, type_name, target_node, **props):
+        if self.type_name is not None and self.type_name != type_name:
+            raise Exception("This relationship iterator is already prefixed by another type name: " + self.type_name + " and cannot be used to create relationships of type: " + type_name)
 
         if self.direction == _RelationshipsProxy.DIR_OUT or self.direction == _RelationshipsProxy.DIR_BOTH:
-            r = Relationship(name, self.owner_node, target_node, **props)
+            r = Relationship(type_name, self.owner_node, target_node, **props)
         elif self.direction == _RelationshipsProxy.DIR_IN:
-            r = Relationship(name, target_node, self.owner_node, **props)
+            r = Relationship(type_name, target_node, self.owner_node, **props)
 
         return r
 
@@ -330,9 +330,9 @@ class Node(object):
 
 class Relationship(object):
 
-    def __init__(self, name, start, end, id  = None, **props):
+    def __init__(self, type_name, start, end, id  = None, **props):
 
-        self.__dict__['type'] = RelationshipType.create(name)
+        self.__dict__['type'] = RelationshipType.create(type_name)
 
         if id is None:
             row = entities.Relationship(id=genid(), name=self.type, start_node_id = start.id, end_node_id = end.id, type_id = self.type.id)
