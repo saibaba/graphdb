@@ -7,6 +7,8 @@ PASSWORD="sai2"
 COMMON_HEADERS="-v -X POST -H \"Content-Type: application/yaml\" -H \"Accept: application/json\" -H \"X-Auth-User: $USER\" -H \"X-Auth-Password: $PASSWORD\""
 URL=http://127.0.0.1:9080/graphdb/ref
 
+echo "Blog graph as in: http://neo4j.org/scratchpad/doc/screenshots/"
+
 echo "Create tags"
 
 eval curl $COMMON_HEADERS $URL --data \"node: { properties: {name: jo4neo } }\"

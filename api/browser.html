@@ -72,7 +72,7 @@
           </form>
          <br/>
 
-          <h3>Create a child node and relationships to/from current node to the child:</h3>
+          <h3>Create a node and relationships to/from the new node to other nodes:</h3>
           <div id="content">
 
               <div id="left">
@@ -85,17 +85,27 @@
           </div>
           <div id="right">
           <pre>
-          #Here is a sample
-          node:
-            properties:
-              name: down
-              value: D
+#---------------
+node:
+  properties:
+    title: The Matrix
+    year: 1999
+#---------------
+</pre>
 
-            relations:
-              - to_node_id : 97e00125-e2c4-469d-84bb-174307e7845f
-                type: FRIEND
-              - to_node_id : 671921ba-b99e-45cd-b06c-b58132b4baed
-                type: FOE
+Another example:
+
+<pre>
+#---------------
+node:
+  properties:
+    name: Keanu Reeves
+  relations:
+    - to: Node(title=The Matrix)
+      type: ACTS_IN
+      properties:
+        name: Neo
+#---------------
           </pre>
           </div>
 

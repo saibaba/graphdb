@@ -1,4 +1,15 @@
-Graph DB as a service - a generic API to create nodes and relationships between the nodes. Each node or relationship can have properties as name and value pairs.
+====================
+Grap DB as a Service
+====================
+
+Introduction
+============
+
+Graph DB as a service - a generic (web) API to create nodes and relationships between the nodes. Each node or relationship can have properties as name and value pairs.
+
+Registration/Authentication:
+----------------------------
+Before using the web API, you need to register with a username and password by visiting /auth/login - You need to pass the credentials in each API call.
 
 There is always a reference node: "/graphdb/ref" eventhough it is not mandatory to use in a relationship graph.
 
@@ -10,12 +21,13 @@ Directionality of relationships (incoming or outgoing) is entirely semantic and 
 
 You can use ref (or any) node to create new nodes even if the new ones are not related to it.
 
-Authentication/Registration:
-Before using the API, you need to register a username and password by visiting /auth/login - You need to pass the credentials in each API call.
+Basic API operations:
+=====================
+
 
 1) Creating a Node:
 
-Create a node (POSTing to either ref or another node identified by node_id):
+Create a node (POSTing to either ref or another node identified by <node> below):
 
 POST /graphdb/<node>
 
@@ -26,6 +38,7 @@ c) Node(property_name=property_value, ...)  # make sure to escape '(' or ')' in 
 
 
 In request body, include properties/relations in "yaml", for example, as in:
+
 #yaml start
 node:
   properties:
@@ -51,27 +64,29 @@ Try above in the browser at url: /graphdb/ref.
 
 The same example using curl:
 
+curl -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" -H "X-Auth-User: demo" -H "X-Auth-Password: demo" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: { name: Keanu Reeves }, relations: [ { to: Node(title=The Matrix), type: ACTS_IN, properties: { name: Neo}  } ] }"
+
 
 2) Getting the details of a node:
 
 GET /graphdb/(ref|{node_id}) returns the response body with node info including properties, outgoing relations, and incoming relations, for example:
 
-curl -X "GET" -H "Accept: application/json"  http://127.0.0.1:9080/graphdb/8948424b-ac1d-4089-8ed3-61904d7ba6d9
+curl -X GET -H "Content-Type: application/yaml" -H "Accept: application/json" -H "X-Auth-User: demo" -H "X-Auth-Password: demo" http://127.0.0.1:9080/graphdb/Node(name=Keanu%20Reeves)
 
-{"relationships": {"outgoing": [{"type_name": "ATTRIBUTE", "link": "/graphdb/7563023e-0e01-4f9f-b964-3d5129884282", "properties": [{"name": "DefaultValue", "value": "15.0"}, {"name": "Name", "value": "Display Size"}]}, {"type_name": "PRODUCT", "link": "/graphdb/8a5cd207-c281-4394-88cf-56c8e1f33af4", "properties": []}, {"type_name": "PRODUCT", "link": "/graphdb/91b3d76a-8fa0-467a-839e-c82e8bf42371", "properties": []}], "incoming": [{"type_name": "SUBCATEGORY", "link": "/graphdb/e608f901-974a-4cdf-913c-8d9f8f096cd4", "properties": []}]}, "properties": [{"name": "Name", "value": "Laptops"}]}
+{"relationships": {"outgoing": [{"type_name": "ACTS_IN", "link": "/graphdb/13fed092-2c69-446e-8231-c2d257d9dcff", "properties": {"name": "Neo"}}], "incoming": []}, "properties": {"name": "Keanu Reeves"}}
 
-OR
+Here 13fed092-2c69-446e-8231-c2d257d9dcff is the node UUID.
 
 3) Updating a node:
 
 a) Replace a node:
-PUT /graphdb/{node_id}
+PUT /graphdb/<node>
 
 In request body include "yaml" properties and relations (just like in POST) to replace with.
 You cannot replace content of ref node - you need to delete individual child nodes.
 
 b) Adding new properties or relations
-POST /graphdb/{node_id}
+POST /graphdb/<node>
 
 In request body include "yaml" just properties and relations (syntax just like in POST) to append to existing properties/relations.
 You cannot replace content of ref node - you need to delete individual child nodes.
@@ -79,9 +94,9 @@ Do not include "node".
 
 4) Removing a node:
 
-DELETE /graphdb/{node_id}
+DELETE /graphdb/<node>
 
-It automatically removes all incoming/outgoing relations and their properties; also deletes properties of the node.
+This operation deletes the specified node and all of its properties. It also automatically removes all incoming/outgoing relations and their properties.
 
 5) List all nodes (TODO: Pagination)
 GET /graphdb/nodes
@@ -89,3 +104,10 @@ GET /graphdb/nodes
 6) Delete all nodes (it also deletes the ref node - next time it is required, it will be auto-created)
 
 DELETE /graphdb/nodes
+
+7) There are a lot of examples in BLOG.sh and CATEGORIES.sh
+
+8) TODO:
+a) Fix: relation property names cannot be: type_name, self ...
+b) post to /graphdb/nodes instead of /graphdb/ref
+

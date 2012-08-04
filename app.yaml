@@ -15,6 +15,10 @@ handlers:
 - url: /prodcat/.*
   script: prodcat.catalog.application
 
+- url: /graphdb
+  static_files: doc/README.html
+  upload: doc/README.html
+
 - url: /graphdb/.*
   script: api.application
 
