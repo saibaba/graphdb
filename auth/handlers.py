@@ -170,7 +170,8 @@ class LoginHandler(BaseHandler):
         except (InvalidAuthIdError, InvalidPasswordError), e:
             # Returns error message to self.response.write in the BaseHandler.dispatcher
             # Currently no message is attached to the exceptions
-            return e
+            #return self.redirect(auth_config()['login_url'], abort=False)
+            return "Invalid login. Try again!"
 
 
 class CreateUserHandler(BaseHandler):

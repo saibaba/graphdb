@@ -1,4 +1,4 @@
-from api.graph import Node
+from api.graph import Db, Node
 import json
 import logging
 import yaml
@@ -12,7 +12,8 @@ from google.appengine.ext import db
 
 
 def reference():
-    return Node.ref(auth.get_tenant())
+    gdb = Db(auth.get_tenant())
+    return gdb.reference_node
 
 class NodeAPI(webapp2.RequestHandler):
 
@@ -84,7 +85,7 @@ class NodeAPI(webapp2.RequestHandler):
                 message += "Node with id: " + spec + " does not exist"
         else:
             nq = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in spec[spec.index("(")+1:spec.index(")")].strip().split(",")]])
-            n = Node.find(auth.get_tenant(), **nq)
+            n = Node.findWithProperties(auth.get_tenant(), **nq)
             if len(n) == 1:
                 n = n[0]
             elif len(n) > 1:
@@ -182,7 +183,7 @@ class NodeAPI(webapp2.RequestHandler):
             for pli in pl:
                 if type(pl[pli]) != "str":
                     pl[pli] = str(pl[pli])
-            n = Node.new(auth.get_tenant(), **pl)
+            n = Node(auth.get_tenant(), **pl)
             if 'relations' in yaml_data['node']:
                 rl = yaml_data['node']['relations']
         elif 'relations' in yaml_data:
@@ -202,8 +203,11 @@ class NodeAPI(webapp2.RequestHandler):
             rpl = r['properties'] if 'properties' in r else {}
             logging.info("  ** relation properties: ")
             for rpli in rpl:
+                logging.info("\t " + rpli + " = " + rpl[rpli])
                 if type(rpl[rpli]) != "str":
                     rpl[rpli] = str(rpl[rpli])
+
+
 
             n1 = None
             n2 = None
@@ -320,7 +324,6 @@ class NodeListerAPI(webapp2.RequestHandler):
     def delete(self):
         nodes = Node.findn(auth.get_tenant())
         for n in nodes:
-            logging.info( "Deleting..." +  str(n))
             n.delete()
 
         self.response.status = "204 OK"

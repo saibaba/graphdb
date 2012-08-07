@@ -111,3 +111,8 @@ DELETE /graphdb/nodes
 a) Fix: relation property names cannot be: type_name, self ...
 b) post to /graphdb/nodes instead of /graphdb/ref
 
+References:
+1) http://stackoverflow.com/questions/1630087/how-would-you-design-an-appengine-datastore-for-a-social-site-like-twitter
+2) http://neo4j.org/scratchpad/doc/screenshots/
+3) http://www.google.com/events/io/2009/sessions/SofterSideofSchemas.html
+4) http://www.google.com/events/io/2009/sessions/BuildingScalableComplexApps.html

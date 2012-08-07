@@ -1,8 +1,8 @@
 #set -x
 #set -v
 
-USER="demo"
-PASSWORD="demo"
+USER="categories"
+PASSWORD="categories"
 
 COMMON="-v -X POST -H \"Content-Type: application/yaml\" -H \"Accept: application/json\" -H \"X-Auth-User: $USER\" -H \"X-Auth-Password: $PASSWORD\""
 BASE_URL=http://127.0.0.1:9080/graphdb
