@@ -229,7 +229,6 @@ class Relationship(object):
         return Node(self.row.start_node)
 
     def end(self):
-        logging.info("***** GETTING END for start: " + str(self.start().row.key().name() ) )
         return Node(self.row.end_node)
 
     def __getattr__(self, n):
