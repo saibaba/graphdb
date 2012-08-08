@@ -114,7 +114,55 @@ class RelationshipType(object):
 
 NVPair = namedtuple('NVPair', ['name', 'value'])
 
-class Node(object):
+class Base(object):
+    def __init__(self, row):
+        self.__dict__['row'] = row
+
+    def __getattr__(self, n):
+        if n == "id":
+            return str(self.row.key())
+        # or just return self.row and define __get__ on entities.Node to make it a descriptor
+        return getattr(self.row, n)
+
+    def __setattr__(self, n, v):
+        setattr(self.row, n, v)
+        self.row.put()
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def attributes(self):
+        return [NVPair(name=p, value=self[p]) for p in self.row.instance_properties()]
+
+    def create_properties(self, **props):
+        for p in props:
+            setattr(self.row, p, props[p])
+        self.row.put()
+
+    def add_properties(self, propdict):
+        for a,v in propdict.items():
+            self[a] = v
+
+    def delete_properties(self):
+        alist = self.attributes()
+        for a in alist:
+            delattr(self.row, a.name)
+        self.row.put()
+
+    def delete(self):
+        db.delete(self.row.key())
+        del self.__dict__['row']
+
+    def items(self): return ( (p, self[p]) for p in self.row.instance_properties() )
+    def keys(self): return (p for p in self.row.instance_properties())
+    def values(self): return (self[p] for p in self.row.instance_properties())
+    def iterkeys(self): return self.keys()
+
+
+class Node(Base):
 
 
     @classmethod
@@ -138,54 +186,19 @@ class Node(object):
         return n
 
     def __init__(self, row):
-        self.__dict__['row'] = row
+        super(Node, self).__init__(row)
         self.__dict__['relationships'] = _RelationshipsProxy(self)
-
-    def __getattr__(self, n):
-        if n == "id":
-            return str(self.row.key())
-        # or just return self.row and define __get__ on entities.Node to make it a descriptor
-        return getattr(self.row, n)
-
-    def __setattr__(self, n, v):
-        setattr(self.row, n, v)
-        self.row.put()
-
-    def __getitem__(self, key):
-        return self.__getattr__(key)
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
 
     def __str__(self):
         return "Node with properties:" + ";".join([str((a.name, a.value)) for a in self.attributes()])
 
-    def attributes(self):
-        return [NVPair(name=p, value=self[p]) for p in self.row.instance_properties()]
-
-    def create_properties(self, **props):
-        for p in props:
-            setattr(self.row, p, props[p])
-        self.row.put()
-
     def delete(self):
         self.delete_relations()
-        db.delete(self.row.key())
-        del self.__dict__['row']
+        super(Node, self).delete()
 
     def delete_relations(self):
         for r in self.relationships:
             r.delete()
-
-    def add_properties(self, propdict):
-        for a,v in propdict.items():
-            self[a] = v
-
-    def delete_properties(self):
-        alist = self.attributes()
-        for a in alist:
-            delattr(self.row, a.name)
-        self.row.put()
 
     @classmethod
     def findn(cls, tenant, start_key = None, n = 10, page_no = 1):
@@ -220,10 +233,7 @@ class Node(object):
 
         return nodes
 
-class Relationship(object):
-
-    def __init__(self, row):
-        self.__dict__['row'] = row
+class Relationship(Base):
 
     def start(self):
         return Node(self.row.start_node)
@@ -234,34 +244,11 @@ class Relationship(object):
     def __getattr__(self, n):
         if n == "type":
             return RelationshipType(self.row.rel_type)
-
-        return getattr(self.row, n)
-
-    def __setattr__(self, n, v):
-        setattr(self.row, n, v)
-        self.row.put()
-
-    def __getitem__(self, key):
-        return self.__getattr__(key)
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
-
-    def attributes(self):
-        return [NVPair(name=p, value=self[p]) for p in self.row.instance_properties()]
+        return super(Relationship, self).__getattr__(n)
 
     def __str__(self):
         alist = self.attributes()
         return "Relationship from " + str(self.start()) + " to " + str(self.end()) + " with name " + self.row.rel_type.key().name() + " and properties: " + ";".join([str((a.name, a.value)) for a in alist])
-
-    def create_properties(self, **props):
-        for p in props:
-            setattr(self.row, p, props[p])
-        self.row.put()
-
-    def delete(self):
-        db.delete(self.row.key())
-        del self.__dict__['row']
 
     @classmethod
     def create(cls, type_name, start_node, end_node, **props):
@@ -273,4 +260,3 @@ class Relationship(object):
         r = Relationship(row)
         r.create_properties(**props)
         return r
-

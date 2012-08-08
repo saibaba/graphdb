@@ -83,7 +83,11 @@ class NodeAPI(webapp2.RequestHandler):
             if n is None:
                 message += "Node with id: " + spec + " does not exist"
         else:
-            nq = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in spec[spec.index("(")+1:spec.index(")")].strip().split(",")]])
+            try:
+                nq = dict([ [nv[0].strip(), nv[1].strip() ] for nv in [nv.split("=") for nv in spec[spec.index("(")+1:spec.index(")")].strip().split(",")]])
+            except:
+                self.abort(400, "Unable to parse node defn")
+
             n = Node.find(auth.get_tenant(), **nq)
             if len(n) == 1:
                 n = n[0]
@@ -242,19 +246,19 @@ class NodeAPI(webapp2.RequestHandler):
         logging.info("Starting node to use:" + str(ref))
 
         tref = { 'properties' : {}  }
-        for ap in ref.attributes():
-            tref['properties'][ap[0]] = ap[1]
+        for an, av in ref.items():
+            tref['properties'][an] = av
 
         tref['relationships'] = dict(outgoing=[], incoming=[])
         for r in ref.relationships.outgoing:
             x = {}
-            for rap in r.attributes():
-                x[rap[0]] = rap[1]
+            for ran, rav in r.items():
+                x[ran] = rav
             tref['relationships']['outgoing'].append( { 'link' : '/graphdb/' + r.end().id, 'type_name' : r.type.name(), 'properties' : x } )
         for r in ref.relationships.incoming:
             x = {}
-            for rap in r.attributes():
-                x[rap[0]] = rap[1]
+            for ran,rav in r.items():
+                x[ran] = rav
             tref['relationships']['incoming'].append( { 'link' : '/graphdb/' + r.start().id, 'type_name' : r.type.name(), 'properties' :   x } )
 
         self.response.status = "200 OK"
@@ -287,20 +291,20 @@ class NodeListerAPI(webapp2.RequestHandler):
 
         for n in nodes:
             tref = { 'properties' : {}  , 'node_link' : '/graphdb/' + n.id , 'node_id' : n.id}
-            for ap in n.attributes():
-                tref['properties'][ap[0]] = ap[1]
+            for an,av in n.items():
+                tref['properties'][an] = av
 
             tref['relationships'] = dict(outgoing=[], incoming=[])
             for r in n.relationships.outgoing:
                 x = {}
-                for rap in r.attributes():
-                    x[rap[0]] = rap[1]
+                for ran,rav in r.items():
+                    x[ran] = rav
                 tref['relationships']['outgoing'].append( { 'link' : '/graphdb/' + r.end().id, 'type_name' : r.type.name(), 'properties' : x } )
 
             for r in n.relationships.incoming:
                 x = {}
-                for rap in r.attributes():
-                    x[rap[0]] = rap[1]
+                for ran,rav in r.items():
+                    x[ran] = rav
                 tref['relationships']['incoming'].append( { 'link' : '/graphdb/' + r.start().id, 'type_name' : r.type.name(), 'properties' :   x } )
 
             nodes_hash['nodes'].append(tref)
