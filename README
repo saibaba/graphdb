@@ -1,11 +1,14 @@
-====================
-Grap DB as a Service
-====================
+========
+Graph DB
+========
 
 Introduction
 ============
 
-Graph DB as a service - a generic (web) API to create nodes and relationships between the nodes. Each node or relationship can have properties as name and value pairs.
+This is a simple API that provides a Graph DB (backed by GAE datastore) as a service - a generic (web) API to create nodes and relationships between the nodes. 
+Each node or relationship can have properties as name and value pairs.
+
+Also, included is a python DSL (similar to neo4j) that is layered on top of GAE datastore.
 
 Registration/Authentication:
 ----------------------------
@@ -21,8 +24,9 @@ Directionality of relationships (incoming or outgoing) is entirely semantic and 
 
 You can use ref (or any) node to create new nodes even if the new ones are not related to it.
 
-Basic API operations:
-=====================
+========================================================
+Basic WEB API operations (see the bottom for Python API):
+========================================================
 
 
 1) Creating a Node:
@@ -105,13 +109,27 @@ GET /graphdb/nodes
 
 DELETE /graphdb/nodes
 
-7) There are a lot of examples in BLOG.sh and CATEGORIES.sh
+7) There are a lot of examples in SOCIAL_NETWORK.sh, BLOG.sh, and CATEGORIES.sh in samples/webapi folder
 
 8) TODO:
-a) Fix: relation property names cannot be: type_name, self ...
-b) post to /graphdb/nodes instead of /graphdb/ref
+a) post to /graphdb/nodes instead of /graphdb/ref to create new nondes
 
+
+=================
+Using Python API:
+=================
+
+You just need two files:
+
+model/entities.py
+api/graph.py
+
+Once they are loaded into GAE environment, you can play with the API directly from the Interactive Console. 
+Samples are available in samples/lib folder that you can copy/paste into the console.
+
+===========
 References:
+===========
 1) http://stackoverflow.com/questions/1630087/how-would-you-design-an-appengine-datastore-for-a-social-site-like-twitter
 2) http://neo4j.org/scratchpad/doc/screenshots/
 3) http://www.google.com/events/io/2009/sessions/SofterSideofSchemas.html
