@@ -2,13 +2,6 @@
 Graph DB on GAE datastore
 =========================
 
-:Info: See <http://telusai.github.com/graphdb.git>.
-:Author: Saibaba Telukunta <saibaba.telukunta@gmail.com>
-:Date: $Date: 2012-06-22 19:49:51 +0000 (Fri, 22 Jun 2012) $
-:Revision: $Revision: 7463 $
-:Description: Graph DB abstraction on google app. engine datastore
-
-
 Introduction
 ============
 
