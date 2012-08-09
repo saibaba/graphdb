@@ -134,11 +134,11 @@ You can use ref (or any) node to create new nodes even if the new ones are not r
 </p>
 
 <p>
-It can be used as a restful service or as a python API.
+It can be used as a <a href="#lrestful-service" title="Restful service">Restful service</a> or as a <a href="#lpython-api" title="Python API">Python API</a>.
 </p>
 
 <h2 id="lrestful-service">Restful service</h2>
-<h3 id="lregistration47authentication58">Registration/Authentication:</h3>
+<h3 id="lregistration47authentication">Registration/Authentication</h3>
 
 <p class="subh3">
 Before using the restful API, you need to register with a username and password by visiting /auth/login - You need to pass the credentials in each API call.
@@ -156,7 +156,7 @@ Nodes are identified a variety of means as given below in examples.
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
 </p>
 
-<h3 id="lapi-operations-40see-the-bottom-for-python-api4158">API operations (see the bottom for Python API):</h3>
+<h3 id="lapi-operations-40see-the-bottom-for-96python-api96_41">API operations (see the bottom for <a href="#lpython-api" title="Python API">Python API</a>)</h3>
 
 <p>
 In the below API operations, the graph nodes can be identified by following means:
@@ -267,7 +267,7 @@ The same example using curl:
  curl -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" -H "X-Auth-User: demo" -H "X-Auth-Password: demo" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: { name: Keanu Reeves }, relations: [ { to: Node(title=The Matrix), type: ACTS_IN, properties: { name: Neo}  } ] }"
 </pre>
 
-<h4 id="lgetting-the-details-of-a-node58">Getting the details of a node:</h4>
+<h4 id="lgetting-the-details-of-a-node">Getting the details of a node</h4>
 
 <p>
 <strong>GET /graphdb/&lt;node&gt;</strong>
@@ -290,7 +290,7 @@ Here is the response:
  {"relationships": {"outgoing": [{"type_name": "ACTS_IN", "link": "/graphdb/13fed092-2c69-446e-8231-c2d257d9dcff", "properties": {"name": "Neo"}}], "incoming": []}, "properties": {"name": "Keanu Reeves"}}
 </pre>
 
-<h4 id="lupdating-a-node58">Updating a node:</h4>
+<h4 id="lupdating-a-node">Updating a node</h4>
 
 <p>
 Replace a node:
@@ -318,7 +318,7 @@ In request body include "yaml" just properties and relations (syntax just like i
 You cannot replace content of ref node - you need to delete individual child nodes.
 </p>
 
-<h4 id="lremoving-a-node58">Removing a node:</h4>
+<h4 id="lremoving-a-node">Removing a node</h4>
 
 <p>
 <strong>DELETE /graphdb/&lt;node&gt;</strong>
@@ -328,7 +328,7 @@ You cannot replace content of ref node - you need to delete individual child nod
 This operation deletes the specified node and all of its properties. It also automatically removes all incoming/outgoing relations and their properties.
 </p>
 
-<h4 id="ldelete-all-nodes58">Delete all nodes:</h4>
+<h4 id="ldelete-all-nodes">Delete all nodes</h4>
 
 <p>
 <strong>DELETE /graphdb/nodes</strong>
@@ -338,7 +338,7 @@ This operation deletes the specified node and all of its properties. It also aut
 It also deletes the ref node - next time it is required, it will be auto-created.
 </p>
 
-<h4 id="llist-all-nodes58">List all nodes:</h4>
+<h4 id="llist-all-nodes">List all nodes</h4>
 
 <p>
 <strong>GET /graphdb/nodes</strong>
@@ -348,13 +348,13 @@ It also deletes the ref node - next time it is required, it will be auto-created
 This lists all nodes including their information just like in GET for a single node.
 </p>
 
-<h4 id="lsamples58">Samples:</h4>
+<h4 id="lsamples">Samples</h4>
 
-<p class="subh4">
-<strong>There are a lot of examples in SOCIAL_NETWORK.sh, BLOG.sh, and CATEGORIES.sh in samples/webapi folder</strong>
+<p>
+<strong>There are a lot of curl examples in SOCIAL_NETWORK.sh, BLOG.sh, and CATEGORIES.sh in samples/webapi folder.</strong>
 </p>
 
-<h4 id="ltodo58">TODO:</h4>
+<h4 id="ltodo">TODO</h4>
 <ol class="loweralpha">
 <li>
 
@@ -371,7 +371,7 @@ Pagination support for listing
 
 
 </li></ol>
-<h1 id="lusing-python-api58">Using Python API:</h1>
+<h2 id="lpython-api">Python API</h2>
 
 <p>
 You just need two files:
@@ -396,16 +396,16 @@ api/graph.py
 </ul>
 
 <p>
-Once they are loaded into GAE environment, you can play with the API directly from the Interactive Console.
+Once they are loaded into GAE environment, you can play with the API directly from the Interactive Console or use in GAE application.
 </p>
 
-<h2 id="lsamples58">Samples:</h2>
+<h3 id="lsamples">Samples</h3>
 
 <p>
-Samples are available in samples/lib folder that you can copy/paste into the console.
+<strong>Python samples are available in samples/lib folder that you can copy/paste into the console.</strong>
 </p>
 
-<h1 id="lreferences58">References:</h1>
+<h1 id="lreferences">References</h1>
 <ol class="decimal">
 <li>
 

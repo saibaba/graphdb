@@ -14,13 +14,13 @@ Directionality of relationships (incoming or outgoing) is entirely semantic and 
 There is always a reference node - eventhough it is not mandatory to use in a relationship graph.
 You can use ref (or any) node to create new nodes even if the new ones are not related to it.
 
-It can be used as a restful service or as a python API.
+It can be used as a `Restful service`_ or as a `Python API`_.
 
 Restful service
 ===============
 
-Registration/Authentication:
-----------------------------
+Registration/Authentication
+---------------------------
 Before using the restful API, you need to register with a username and password by visiting /auth/login - You need to pass the credentials in each API call.
 
 Reference node's URL: "/graphdb/ref".
@@ -29,8 +29,8 @@ Nodes are identified a variety of means as given below in examples.
 
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
 
-API operations (see the bottom for Python API):
------------------------------------------------
+API operations (see the bottom for `Python API`_)
+-------------------------------------------------
 
 In the below API operations, the graph nodes can be identified by following means:
 
@@ -90,8 +90,8 @@ The same example using curl:
   curl -X "POST" -H "Content-Type: application/yaml" -H "Accept: application/json" -H "X-Auth-User: demo" -H "X-Auth-Password: demo" http://127.0.0.1:9080/graphdb/ref --data "node: { properties: { name: Keanu Reeves }, relations: [ { to: Node(title=The Matrix), type: ACTS_IN, properties: { name: Neo}  } ] }"
 
 
-Getting the details of a node:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Getting the details of a node
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **GET /graphdb/<node>**
 
@@ -107,8 +107,8 @@ Here is the response:
   {"relationships": {"outgoing": [{"type_name": "ACTS_IN", "link": "/graphdb/13fed092-2c69-446e-8231-c2d257d9dcff", "properties": {"name": "Neo"}}], "incoming": []}, "properties": {"name": "Keanu Reeves"}}
 
 
-Updating a node:
-^^^^^^^^^^^^^^^^
+Updating a node
+^^^^^^^^^^^^^^^
 
 Replace a node:
 
@@ -124,57 +124,57 @@ Adding new properties or relations:
 In request body include "yaml" just properties and relations (syntax just like in POST) to append to existing properties/relations.
 You cannot replace content of ref node - you need to delete individual child nodes.
 
-Removing a node:
-^^^^^^^^^^^^^^^^
+Removing a node
+^^^^^^^^^^^^^^^
 
 **DELETE /graphdb/<node>**
 
 This operation deletes the specified node and all of its properties. It also automatically removes all incoming/outgoing relations and their properties.
 
-Delete all nodes:
-^^^^^^^^^^^^^^^^^
+Delete all nodes
+^^^^^^^^^^^^^^^^
 
 **DELETE /graphdb/nodes**
 
 It also deletes the ref node - next time it is required, it will be auto-created.
 
-List all nodes:
-^^^^^^^^^^^^^^^
+List all nodes
+^^^^^^^^^^^^^^
 
 **GET /graphdb/nodes**
 
 This lists all nodes including their information just like in GET for a single node.
 
-Samples:
-^^^^^^^^
-**There are a lot of examples in SOCIAL_NETWORK.sh, BLOG.sh, and CATEGORIES.sh in samples/webapi folder**
+Samples
+^^^^^^^
 
-TODO:
-^^^^^
+**There are a lot of curl examples in SOCIAL_NETWORK.sh, BLOG.sh, and CATEGORIES.sh in samples/webapi folder.**
+
+TODO
+^^^^
 a) Post to /graphdb/nodes instead of /graphdb/ref to create new nondes
 b) Pagination support for listing
 
 
-=================
-Using Python API:
-=================
+Python API
+==========
 
 You just need two files:
 
 * model/entities.py
 * api/graph.py
 
-Once they are loaded into GAE environment, you can play with the API directly from the Interactive Console. 
+Once they are loaded into GAE environment, you can play with the API directly from the Interactive Console or use in GAE application.
 
 
-Samples:
-========
+Samples
+-------
 
-Samples are available in samples/lib folder that you can copy/paste into the console.
+**Python samples are available in samples/lib folder that you can copy/paste into the console.**
 
-===========
-References:
-===========
+==========
+References
+==========
 1. http://stackoverflow.com/questions/1630087/how-would-you-design-an-appengine-datastore-for-a-social-site-like-twitter
 2. http://neo4j.org/scratchpad/doc/screenshots/
 3. http://www.google.com/events/io/2009/sessions/SofterSideofSchemas.html
