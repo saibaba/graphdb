@@ -175,7 +175,7 @@ Samples
 
 Here is a sample session:
 
-.. image:: movies_ic.png
+.. image:: https://raw.github.com/saibaba/graphdb/master/movies_ic.png
    :width: 100pt
 
 
