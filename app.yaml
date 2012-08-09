@@ -6,24 +6,12 @@ threadsafe: true
 
 handlers:
 
-- url: /welcome/.*
-  script: welcome.application
-
-- url: /browser/.*
-  script: ui.application
-
-- url: /prodcat/.*
-  script: prodcat.catalog.application
-
 - url: /graphdb
   static_files: doc/README.html
   upload: doc/README.html
 
 - url: /graphdb/.*
   script: api.application
-
-- url: /secure
-  script: auth.application
 
 - url: /auth/.*
   script: auth.application
