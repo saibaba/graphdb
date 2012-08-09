@@ -21,6 +21,7 @@ Restful service
 
 Registration/Authentication
 ---------------------------
+
 Before using the restful API, you need to register with a username and password by visiting /auth/login - You need to pass the credentials in each API call.
 
 Reference node's URL: "/graphdb/ref".
@@ -171,6 +172,12 @@ Samples
 -------
 
 **Python samples are available in samples/lib folder that you can copy/paste into the console.**
+
+Here is a sample session:
+
+.. image:: movies_ic.png
+   :width: 100pt
+
 
 ==========
 References
