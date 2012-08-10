@@ -2,6 +2,13 @@
 Graph DB on GAE datastore
 =========================
 
+.. raw:: html
+
+  <style> .red {color:red} </style>
+
+
+.. role:: red
+
 Introduction
 ============
 
@@ -16,8 +23,36 @@ You can use ref (or any) node to create new nodes even if the new ones are not r
 
 It can be used as a `Restful service`_ or as a `Python API`_.
 
+
+
 Restful service
 ===============
+
+Running locally
+---------------
+
+Use th following steps to run the restfulapi application locally:
+
+1) Get the code from github
+
+::
+
+   git clone https://github.com/saibaba/graphdb.git
+
+
+2) Change to the application directory
+
+::
+
+  cd graphdb
+
+
+3) Launch GAE development
+
+::
+
+   dev_appserver.py .
+
 
 Registration/Authentication
 ---------------------------
@@ -29,6 +64,8 @@ Reference node's URL: "/graphdb/ref".
 Nodes are identified a variety of means as given below in examples.
 
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
+
+**:red:`Make sure to use https in your GAE application as the username/password are in clear.`**
 
 API operations (see the bottom for `Python API`_)
 -------------------------------------------------
@@ -128,7 +165,7 @@ You cannot replace content of ref node - you need to delete individual child nod
 Removing a node
 ^^^^^^^^^^^^^^^
 
-**DELETE /graphdb/<node>**
+**:red:`DELETE /graphdb/<node>`**
 
 This operation deletes the specified node and all of its properties. It also automatically removes all incoming/outgoing relations and their properties.
 

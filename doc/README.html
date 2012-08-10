@@ -1,5 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
-    "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -114,6 +114,11 @@ div.vstfooter p { margin: 0px }
 <body>
 
 <h1 id="lgraph-db-on-gae-datastore">Graph DB on GAE datastore</h1>
+
+
+  <style> .red {color:red} </style>
+
+
 <h2 id="lintroduction">Introduction</h2>
 
 <p>
@@ -138,6 +143,54 @@ It can be used as a <a href="#lrestful-service" title="Restful service">Restful 
 </p>
 
 <h2 id="lrestful-service">Restful service</h2>
+<h3 id="lrunning-locally">Running locally</h3>
+
+<p>
+Use th following steps to run the restfulapi application locally:
+</p>
+
+<ol class="decimal">
+<li>
+
+<p>
+Get the code from github
+</p>
+
+
+</li></ol>
+
+<pre>
+ git clone https://github.com/saibaba/graphdb.git
+</pre>
+
+<ol class="decimal" start="2">
+<li>
+
+<p>
+Change to the application directory
+</p>
+
+
+</li></ol>
+
+<pre>
+ cd graphdb
+</pre>
+
+<ol class="decimal" start="3">
+<li>
+
+<p>
+Launch GAE development
+</p>
+
+
+</li></ol>
+
+<pre>
+ dev_appserver.py .
+</pre>
+
 <h3 id="lregistration47authentication">Registration/Authentication</h3>
 
 <p>
@@ -154,6 +207,10 @@ Nodes are identified a variety of means as given below in examples.
 
 <p>
 You can browse through the nodes and create new nodes/relations by starting at: "/graphdb/ref".
+</p>
+
+<p>
+<strong><span class="red">Make sure to use https in your GAE application as the username/password are in clear.</span></strong>
 </p>
 
 <h3 id="lapi-operations-40see-the-bottom-for-96python-api96_41">API operations (see the bottom for <a href="#lpython-api" title="Python API">Python API</a>)</h3>
@@ -321,7 +378,7 @@ You cannot replace content of ref node - you need to delete individual child nod
 <h4 id="lremoving-a-node">Removing a node</h4>
 
 <p>
-<strong>DELETE /graphdb/&lt;node&gt;</strong>
+<strong><span class="red">DELETE /graphdb/&lt;node&gt;</span></strong>
 </p>
 
 <p>
@@ -411,7 +468,7 @@ Here is a sample session:
 
 <p>
 
-<img src="movies_ic.png" width="100pt"  alt="movies_ic.png" />
+<img src="https://raw.github.com/saibaba/graphdb/master/movies_ic.png" width="100pt"  alt="https://raw.github.com/saibaba/graphdb/master/movies_ic.png" />
 
 </p>
 <h1 id="lreferences">References</h1>
