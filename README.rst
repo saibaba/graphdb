@@ -54,6 +54,18 @@ Use th following steps to run the restfulapi application locally:
    dev_appserver.py .
 
 
+To deploy your own instance of the app to Google App Engine:
+
+1. Register your own application ID on the App Engine admin site.
+2. Edit app.yaml to use this app ID instead of 'mygraphdb'.
+3. Upload using (run from the parent directory where you cloned this git repo into)
+
+::
+
+  appcfg.py update graphdb
+
+
+
 Registration/Authentication
 ---------------------------
 
